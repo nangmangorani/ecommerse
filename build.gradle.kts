@@ -47,6 +47,13 @@ dependencies {
 
 	// Swagger
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
+
+	// lombok
+	compileOnly("org.projectlombok:lombok") // 컴파일 시에만 필요
+	annotationProcessor("org.projectlombok:lombok") // 애너테이션 프로세서
+	testImplementation("org.projectlombok:lombok") // 테스트 코드에서 Lombok 사용 시
+	testAnnotationProcessor("org.projectlombok:lombok") // 테스트 애너테이션 프로세서
+
 }
 
 tasks.withType<Test> {
