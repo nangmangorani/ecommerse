@@ -28,3 +28,19 @@ public class ProductController {
 
     }
 
+    @Operation(summary = "상위 5개 상품 조회")
+    @GetMapping("/list/top5")
+    public ResponseEntity<List<ProductListDto>> getProductListTop5() {
+
+        List<ProductListDto> productListDto = List.of(
+                new ProductListDto(1,"상품1",3,1000,"의류"),
+                new ProductListDto(2,"상품2",4,2000,"침구류"),
+                new ProductListDto(3,"상품3",5,3000,"가구류"),
+                new ProductListDto(4,"상품4",1,6100,"필기구"),
+                new ProductListDto(5,"상품5",7,5000,"의류")
+                );
+
+        return ResponseEntity.ok(productListDto);
+    }
+
+}
