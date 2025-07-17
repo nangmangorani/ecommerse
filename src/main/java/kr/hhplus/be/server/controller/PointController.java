@@ -21,3 +21,15 @@ public class PointController {
         return ResponseEntity.ok(userPointInfo);
     }
 
+    @Operation(summary = "사용자 포인트 충전")
+    @PostMapping("/charge")
+    public ResponseEntity<PointInqDto> chargeUserPoint(@RequestBody PointChargeDto pointChargeDto) {
+
+        // 포인트 충전(서비스)
+
+        // 포인트 충전 후 현잔고 반환
+        PointInqDto userPointInfo = new PointInqDto(1,"이승준",1000);
+
+        return ResponseEntity.ok(userPointInfo);
+    }
+}
