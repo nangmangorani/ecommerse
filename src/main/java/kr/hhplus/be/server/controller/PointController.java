@@ -2,8 +2,8 @@ package kr.hhplus.be.server.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import kr.hhplus.be.server.dto.point.PointChargeDto;
-import kr.hhplus.be.server.dto.point.PointInqDto;
+import kr.hhplus.be.server.dto.point.RequestPointCharge;
+import kr.hhplus.be.server.dto.point.ResponseUserPoint;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,21 +14,21 @@ public class PointController {
 
     @Operation(summary = "id값을 통해 사용자 조회")
     @GetMapping("/{id}")
-    public ResponseEntity<PointInqDto> getUserPoint(@PathVariable("id") long id) {
+    public ResponseEntity<ResponseUserPoint> getUserPoint(@PathVariable("id") long id) {
 
-        PointInqDto userPointInfo = new PointInqDto(1,"이승준",1000);
+        ResponseUserPoint userPointInfo = new ResponseUserPoint(1,"이승준",1000);
 
         return ResponseEntity.ok(userPointInfo);
     }
 
     @Operation(summary = "사용자 포인트 충전")
     @PostMapping("/charge")
-    public ResponseEntity<PointInqDto> chargeUserPoint(@RequestBody PointChargeDto pointChargeDto) {
+    public ResponseEntity<ResponseUserPoint> chargeUserPoint(@RequestBody RequestPointCharge requestPointCharge) {
 
         // 포인트 충전(서비스)
 
         // 포인트 충전 후 현잔고 반환
-        PointInqDto userPointInfo = new PointInqDto(1,"이승준",1000);
+        ResponseUserPoint userPointInfo = new ResponseUserPoint(1,"이승준",1000);
 
         return ResponseEntity.ok(userPointInfo);
     }

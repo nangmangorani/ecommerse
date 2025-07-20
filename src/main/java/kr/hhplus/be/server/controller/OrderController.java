@@ -2,8 +2,8 @@ package kr.hhplus.be.server.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import kr.hhplus.be.server.dto.order.RequestOrderDto;
-import kr.hhplus.be.server.dto.order.ResponseOrderDto;
+import kr.hhplus.be.server.dto.order.RequestOrder;
+import kr.hhplus.be.server.dto.order.ResponseOrder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,9 +17,9 @@ public class OrderController {
 
     @Operation(summary = "상품 주문 및 결제")
     @PostMapping("/")
-    public ResponseEntity<ResponseOrderDto> responseOrderDto(@RequestBody RequestOrderDto requestOrderDto) {
+    public ResponseEntity<ResponseOrder> responseOrder(@RequestBody RequestOrder requestOrder) {
 
-        ResponseOrderDto orderDto = new ResponseOrderDto(1,1,1,"이승준","상품1","의류 20%할인 쿠폰", "Y", 1000, 800);
+        ResponseOrder orderDto = new ResponseOrder(1,1,1,"이승준","상품1","의류 20%할인 쿠폰", "Y", 1000, 800);
 
         return ResponseEntity.ok(orderDto);
     }
