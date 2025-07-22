@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.domain;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.TransactionType;
 
 import java.time.LocalDateTime;
 
@@ -13,14 +14,15 @@ public class PointHist {
     @Column(name = "POINT_HIST_ID")
     private Long id;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "TRANSACTION_TYPE", length = 20, nullable = false)
-    private String transactionType;
+    private TransactionType transactionType;
 
     @Column(name = "AMOUNT", nullable = false)
-    private int amount;
+    private long amount;
 
     @Column(name = "CURRENT_BALANCE", nullable = false)
-    private int currentBalance;
+    private long currentBalance;
 
     @Column(name = "TRANSACTION_DATETIME", nullable = false)
     private LocalDateTime transactionDateTime;
@@ -34,12 +36,12 @@ public class PointHist {
 
     protected PointHist() {}
 
-    public PointHist(User user, String transactionType, int amount, int currentBalance) {
-        this.user = user;
+    public PointHist(long id, TransactionType transactionType, long amount, long currentBalance, LocalDateTime localDateTime) {
+        this.id = id;
         this.transactionType = transactionType;
         this.amount = amount;
         this.currentBalance = currentBalance;
-        this.transactionDateTime = LocalDateTime.now();
+        this.transactionDateTime = transactionDateTime;
     }
 
 }
