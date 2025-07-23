@@ -3,7 +3,6 @@ package kr.hhplus.be.server;
 import kr.hhplus.be.server.domain.PointHist;
 import kr.hhplus.be.server.domain.User;
 import kr.hhplus.be.server.dto.point.RequestPointCharge;
-import kr.hhplus.be.server.dto.point.ResponsePointCharge;
 import kr.hhplus.be.server.dto.point.ResponseUserPoint;
 import kr.hhplus.be.server.repository.PointRepository;
 import kr.hhplus.be.server.service.PointService;
@@ -13,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.*;

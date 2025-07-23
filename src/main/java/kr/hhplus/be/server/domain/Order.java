@@ -17,10 +17,10 @@ public class Order {
     private String status;
 
     @Column(name = "ORIGINAL_PRICE", nullable = false)
-    private int originalPrice;
+    private long originalPrice;
 
     @Column(name = "DISCOUNTED_PRICE")
-    private int discountedPrice;
+    private long discountedPrice;
 
     @Column(name = "ORDER_DATETIME", nullable = false)
     private LocalDateTime orderDateTime;
@@ -38,7 +38,7 @@ public class Order {
 
     protected Order() {}
 
-    private Order(User user, Product product, int originalPrice, int discountedPrice, String status) {
+    private Order(User user, Product product, long originalPrice, long discountedPrice, String status) {
         this.user = user;
         this.product = product;
         this.originalPrice = originalPrice;
