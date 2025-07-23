@@ -20,18 +20,23 @@ public class Product {
     @Column(name = "PRODUCT_QUANTITY", nullable = false)
     private int quantity;
 
+    @Column(name = "SELL_QUANTITY")
+    private int sellQuantity;
+
     @Column(name = "PRICE", nullable = false)
-    private int price;
+    private long price;
 
     @Column(name = "PRODUCT_TYPE", length = 5)
     private String type;
 
     protected Product() {}
 
-    public Product(String name, String status, int quantity, int price, String type) {
+    public Product(long id, String name, String status, int quantity, int sellQuantity,long price, String type) {
+        this.id = id;
         this.name = name;
         this.status = status;
         this.quantity = quantity;
+        this.sellQuantity = sellQuantity;
         this.price = price;
         this.type = type;
     }
@@ -45,7 +50,9 @@ public class Product {
 
     public Long getId() { return id; }
     public String getName() { return name; }
-    public int getPrice() { return price; }
+    public long getPrice() { return price; }
     public int getQuantity() { return quantity; }
+
+    public String getProductType() { return type; }
 
 }
