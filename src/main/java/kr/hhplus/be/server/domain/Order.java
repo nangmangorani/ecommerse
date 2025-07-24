@@ -14,7 +14,7 @@ public class Order {
     private Long id;
 
     @Column(name = "ORDER_STATUS", length = 2, nullable = false)
-    private String status;
+    private String status; // 01:결제완료 02:결제진행 03:결제취소
 
     @Column(name = "ORIGINAL_PRICE", nullable = false)
     private long originalPrice;
@@ -38,7 +38,7 @@ public class Order {
 
     protected Order() {}
 
-    private Order(User user, Product product, long originalPrice, long discountedPrice, String status) {
+    public Order(User user, Product product, long originalPrice, long discountedPrice, String status) {
         this.user = user;
         this.product = product;
         this.originalPrice = originalPrice;

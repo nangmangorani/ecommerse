@@ -4,7 +4,8 @@ public record RequestOrder(
         long userId,
         long productId,
         long couponId,
+        int requestQuantity,
         long originalPrice,
-        long discountPrice,
+        long requestPrice,
         String couponYn
 ) {}

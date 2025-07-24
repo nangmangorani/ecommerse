@@ -10,6 +10,7 @@ import kr.hhplus.be.server.repository.PointRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class PointService {
@@ -25,18 +26,15 @@ public class PointService {
      */
     public ResponseUserPoint getPoint(long id) {
 
-        User user = pointRepository.getPointById(id);
+        Optional<User> optionalUser = pointRepository.getPointById(id);
 
-        if(user == null) {
-            throw new RuntimeException();
-        }
+        User user = optionalUser.orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
-        if(user.getPoint() < 0) {
+        if (user.getPoint() < 0) {
             throw new RuntimeException();
         }
 
         return ResponseUserPoint.from(user);
-
     }
 
     /**
@@ -45,34 +43,29 @@ public class PointService {
     @Transactional
     public ResponseUserPoint chargePoint(RequestPointCharge requestPointCharge) {
 
-        if(requestPointCharge.userPoint() < 0) {
-            throw new RuntimeException();
+        if (requestPointCharge.userPoint() < 0) {
+            throw new IllegalArgumentException();
         }
 
-        // 사용자 조회
-        User user = pointRepository.getPointById(requestPointCharge.userId());
+        // 사용자 조회 및 null 처리
+        User user = pointRepository.getPointById(requestPointCharge.userId())
+                .orElseThrow(() -> new RuntimeException());
 
-        if(user == null) {
-            throw new RuntimeException();
-        }
-
-        if(user.getPoint() < 0) {
-            throw new RuntimeException();
+        if (user.getPoint() < 0) {
+            throw new IllegalStateException();
         }
 
         // 포인트 충전
         user.addPoint(requestPointCharge.userPoint());
 
-        // 포인트 이력 업데이트
+        // 포인트 이력 저장
         PointHist pointHist = new PointHist(
-                user.getId(),
                 TransactionType.CHARGE,
                 requestPointCharge.userPoint(),
-                user.getPoint(),
-                LocalDateTime.now()
+                user.getPoint()
         );
 
-        PointHist returnHist = pointRepository.save(pointHist);
+        pointRepository.save(pointHist);
 
         return ResponseUserPoint.from(user);
     }

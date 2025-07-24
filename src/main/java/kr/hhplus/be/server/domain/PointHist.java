@@ -36,12 +36,11 @@ public class PointHist {
 
     protected PointHist() {}
 
-    public PointHist(long id, TransactionType transactionType, long amount, long currentBalance, LocalDateTime localDateTime) {
-        this.id = id;
+    public PointHist(TransactionType transactionType, long amount, long currentBalance) {
         this.transactionType = transactionType;
         this.amount = amount;
         this.currentBalance = currentBalance;
-        this.transactionDateTime = transactionDateTime;
+        this.transactionDateTime = LocalDateTime.now();
     }
 
 }
