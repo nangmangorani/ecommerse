@@ -1,13 +1,15 @@
 package kr.hhplus.be.server;
 
+import kr.hhplus.be.TransactionType;
+import kr.hhplus.be.domain.*;
 import kr.hhplus.be.server.domain.*;
-import kr.hhplus.be.server.dto.order.RequestOrder;
-import kr.hhplus.be.server.repository.OrderRepository;
-import kr.hhplus.be.server.repository.PaymentRepository;
-import kr.hhplus.be.server.repository.PointRepository;
-import kr.hhplus.be.server.repository.ProductRepository;
-import kr.hhplus.be.server.service.OrderService;
-import kr.hhplus.be.server.service.PaymentService;
+import kr.hhplus.be.dto.order.RequestOrder;
+import kr.hhplus.be.repository.OrderRepository;
+import kr.hhplus.be.repository.PaymentRepository;
+import kr.hhplus.be.repository.PointRepository;
+import kr.hhplus.be.repository.ProductRepository;
+import kr.hhplus.be.service.OrderService;
+import kr.hhplus.be.service.PaymentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,9 +17,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.BDDMockito.*;
 

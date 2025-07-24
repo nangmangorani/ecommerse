@@ -1,10 +1,10 @@
 package kr.hhplus.be.server;
 
 
-import kr.hhplus.be.server.domain.Product;
-import kr.hhplus.be.server.dto.product.ResponseProduct;
-import kr.hhplus.be.server.repository.ProductRepository;
-import kr.hhplus.be.server.service.ProductService;
+import kr.hhplus.be.domain.Product;
+import kr.hhplus.be.dto.product.ResponseProduct;
+import kr.hhplus.be.repository.ProductRepository;
+import kr.hhplus.be.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

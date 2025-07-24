@@ -1,13 +1,13 @@
 package kr.hhplus.be.server;
 
-import kr.hhplus.be.server.domain.Product;
-import kr.hhplus.be.server.domain.User;
-import kr.hhplus.be.server.dto.order.RequestOrder;
-import kr.hhplus.be.server.dto.order.ResponseOrder;
-import kr.hhplus.be.server.repository.OrderRepository;
-import kr.hhplus.be.server.repository.PointRepository;
-import kr.hhplus.be.server.repository.ProductRepository;
-import kr.hhplus.be.server.service.OrderService;
+import kr.hhplus.be.domain.Product;
+import kr.hhplus.be.domain.User;
+import kr.hhplus.be.dto.order.RequestOrder;
+import kr.hhplus.be.repository.OrderRepository;
+import kr.hhplus.be.repository.PointRepository;
+import kr.hhplus.be.repository.ProductRepository;
+import kr.hhplus.be.repository.UserRepository;
+import kr.hhplus.be.service.OrderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,6 +24,9 @@ public class OrderServiceTest {
 
     @InjectMocks
     private OrderService orderService;
+
+    @InjectMocks
+    private UserRepository userRepository;
 
     @Mock
     private OrderRepository orderRepository;
@@ -56,7 +59,7 @@ public class OrderServiceTest {
         RequestOrder requestOrder = new RequestOrder(1, 1, 1, 1,1000L, 100,"Y");
 
         // given
-        given(pointRepository.getPointById(requestOrder.userId())).willReturn(Optional.empty());
+        given(userRepository.getPointById(requestOrder.userId())).willReturn(Optional.empty());
 
         // when, then
         assertThatThrownBy(() -> orderService.orderProduct(requestOrder))
@@ -73,7 +76,7 @@ public class OrderServiceTest {
         User user = new User(1,"이승준", "Y", 1000L);
 
         // given
-        given(pointRepository.getPointById(requestOrder.userId())).willReturn(Optional.of(user));
+        given(userRepository.getPointById(requestOrder.userId())).willReturn(Optional.of(user));
         given(productRepository.findById(requestOrder.productId())).willReturn(Optional.empty());
 
         // when, then
@@ -91,7 +94,7 @@ public class OrderServiceTest {
         Product product = new Product(1,"상품1","Y",0,10,1000L,"필기구");
 
         // given
-        given(pointRepository.getPointById(requestOrder.userId())).willReturn(Optional.of(user));
+        given(userRepository.getPointById(requestOrder.userId())).willReturn(Optional.of(user));
         given(productRepository.findById(requestOrder.productId())).willReturn(Optional.of(product));
 
         // when, then
@@ -109,19 +112,13 @@ public class OrderServiceTest {
         Product product = new Product(1,"상품1","Y",1,10,1000L,"필기구");
 
         // given
-        given(pointRepository.getPointById(requestOrder.userId())).willReturn(Optional.of(user));
+        given(userRepository.getPointById(requestOrder.userId())).willReturn(Optional.of(user));
         given(productRepository.findById(requestOrder.productId())).willReturn(Optional.of(product));
 
         // when, then
         assertThatThrownBy(() -> orderService.orderProduct(requestOrder))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("잔고 부족");
-
-    }
-
-    @Test
-    @DisplayName("성공적으로 결제단계까지 이동")
-    void 성공적으로_결제단계까지_이동() {
 
     }
 

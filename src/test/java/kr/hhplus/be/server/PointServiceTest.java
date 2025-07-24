@@ -1,18 +1,20 @@
 package kr.hhplus.be.server;
 
-import kr.hhplus.be.server.domain.PointHist;
-import kr.hhplus.be.server.domain.User;
-import kr.hhplus.be.server.dto.point.RequestPointCharge;
-import kr.hhplus.be.server.dto.point.ResponseUserPoint;
-import kr.hhplus.be.server.repository.PointRepository;
-import kr.hhplus.be.server.service.PointService;
+import kr.hhplus.be.TransactionType;
+import kr.hhplus.be.domain.PointHist;
+import kr.hhplus.be.domain.User;
+import kr.hhplus.be.dto.point.RequestPointCharge;
+import kr.hhplus.be.dto.point.ResponseUserPoint;
+import kr.hhplus.be.repository.PointRepository;
+import kr.hhplus.be.repository.UserRepository;
+import kr.hhplus.be.service.PointService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import java.time.LocalDateTime;
+
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -24,6 +26,9 @@ public class PointServiceTest {
 
     @InjectMocks
     private PointService pointService;
+
+    @InjectMocks
+    private UserRepository userRepository;
 
     @Mock
     private PointRepository pointRepository;
@@ -49,7 +54,7 @@ public class PointServiceTest {
     void 회원이_존재하지_않는_경우() {
 
         // given
-        given(pointRepository.getPointById(id)).willReturn(null);
+        given(userRepository.getPointById(id)).willReturn(null);
 
         // when, then
         assertThatThrownBy(() -> pointService.getPoint(id))
@@ -63,7 +68,7 @@ public class PointServiceTest {
         Optional<User> user = Optional.of(new User(1, "이승준", "Y", -1L));
 
         // given
-        given(pointRepository.getPointById(id)).willReturn(user);
+        given(userRepository.getPointById(id)).willReturn(user);
 
         // when, then
         assertThatThrownBy(() -> pointService.getPoint(id))
@@ -77,7 +82,7 @@ public class PointServiceTest {
         Optional<User> user = Optional.of(new User(1, "이승준", "Y", 1000L));
 
         // given
-        given(pointRepository.getPointById(id)).willReturn(user);
+        given(userRepository.getPointById(id)).willReturn(user);
 
         // when
         ResponseUserPoint result = pointService.getPoint(id);
@@ -102,7 +107,7 @@ public class PointServiceTest {
         RequestPointCharge requestPointCharge = new RequestPointCharge(1, -1L);
 
         // given
-        given(pointRepository.getPointById(id)).willReturn(user);
+        given(userRepository.getPointById(id)).willReturn(user);
 
         // when, then
         assertThatThrownBy(() -> pointService.chargePoint(requestPointCharge))
@@ -132,7 +137,7 @@ public class PointServiceTest {
         RequestPointCharge requestPointCharge = new RequestPointCharge(1, 100L);
         PointHist pointHist = new PointHist(TransactionType.CHARGE, 100L, 1000L);
 
-        given(pointRepository.getPointById(requestPointCharge.userId())).willReturn(user);
+        given(userRepository.getPointById(requestPointCharge.userId())).willReturn(user);
         given(pointRepository.save(pointHist)).willReturn(pointHist);
 
         // when
