@@ -27,7 +27,7 @@ public class PointServiceTest {
     @InjectMocks
     private PointService pointService;
 
-    @InjectMocks
+    @Mock
     private UserRepository userRepository;
 
     @Mock

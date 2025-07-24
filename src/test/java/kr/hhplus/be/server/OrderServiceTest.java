@@ -25,7 +25,7 @@ public class OrderServiceTest {
     @InjectMocks
     private OrderService orderService;
 
-    @InjectMocks
+    @Mock
     private UserRepository userRepository;
 
     @Mock

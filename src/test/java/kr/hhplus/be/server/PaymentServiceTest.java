@@ -2,7 +2,6 @@ package kr.hhplus.be.server;
 
 import kr.hhplus.be.TransactionType;
 import kr.hhplus.be.domain.*;
-import kr.hhplus.be.server.domain.*;
 import kr.hhplus.be.dto.order.RequestOrder;
 import kr.hhplus.be.repository.OrderRepository;
 import kr.hhplus.be.repository.PaymentRepository;
