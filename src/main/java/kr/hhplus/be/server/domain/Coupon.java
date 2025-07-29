@@ -29,6 +29,9 @@ public class Coupon {
     @Column(name = "REMAIN_QUANTITY")
     private int remainQuantity;
 
+    @Column(name = "PRODUCT_ID")
+    private long productId;
+
     protected Coupon() {}
 
     public Coupon(String name, String status, String type, int discountPercent, int maxQuantity) {
@@ -40,7 +43,7 @@ public class Coupon {
         this.remainQuantity = maxQuantity;
     }
 
-    public void useCoupon() {
+    public void issueCoupon() {
         if (remainQuantity <= 0) throw new IllegalStateException("쿠폰 소진");
         this.remainQuantity -= 1;
     }
