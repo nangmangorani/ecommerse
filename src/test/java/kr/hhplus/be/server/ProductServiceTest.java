@@ -1,10 +1,10 @@
 package kr.hhplus.be.server;
 
 
-import kr.hhplus.be.domain.Product;
-import kr.hhplus.be.dto.product.ResponseProduct;
-import kr.hhplus.be.repository.ProductRepository;
-import kr.hhplus.be.service.ProductService;
+import kr.hhplus.be.server.domain.Product;
+import kr.hhplus.be.server.dto.product.ResponseProduct;
+import kr.hhplus.be.server.repository.ProductRepository;
+import kr.hhplus.be.server.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,7 +46,7 @@ public class ProductServiceTest {
     void 상품_목록이_없을_경우() {
 
         // given
-        given(productRepository.getProductList()).willReturn(Collections.emptyList());
+        given(productRepository.findAll()).willReturn(Collections.emptyList());
 
         // when
         List<ResponseProduct> response = productService.getProductList();
@@ -66,7 +66,7 @@ public class ProductServiceTest {
         );
 
         // given
-        given(productRepository.getProductList()).willReturn(products);
+        given(productRepository.findAll()).willReturn(products);
 
         // when
         List<ResponseProduct> response = productService.getProductList();
