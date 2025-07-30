@@ -46,6 +46,7 @@ public class Product {
             throw new IllegalArgumentException("재고 부족");
         }
         this.quantity -= amount;
+        this.sellQuantity += amount;
     }
 
     public Long getId() { return id; }

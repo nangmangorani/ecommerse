@@ -6,7 +6,7 @@ import kr.hhplus.be.server.domain.Product;
 public record ResponseProduct(
         long productId,
         String productName,
-        int sellQuantitysellQuantity,
+        int sellQuantity,
         int productQuantity,
         long price,
         String productType

@@ -1,9 +1,11 @@
 package kr.hhplus.be.server.domain;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 
 @Entity
 @Table(name = "COUPON")
+@Getter
 public class Coupon {
 
     @Id

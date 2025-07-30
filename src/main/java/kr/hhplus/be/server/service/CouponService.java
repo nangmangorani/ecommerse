@@ -41,12 +41,17 @@ public class CouponService {
         CouponHist couponHist = couponHistService.addCouponHist(requestUserCoupon, coupon);
 
         ResponseUserCoupon responseUserCoupon = new ResponseUserCoupon(
-                couponHist.getCouponId(),
                 couponHist.getUserId(),
+                couponHist.getCouponId(),
                 couponHist.getProductId()
         );
 
         return responseUserCoupon;
+    }
+
+    public Coupon searchCoupon(Long couponId) {
+        return couponRepository.findById(couponId)
+                .orElseThrow(() -> new RuntimeException("쿠폰없음"));
     }
 
 }

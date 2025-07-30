@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.service;
 
 import jakarta.transaction.Transactional;
+import kr.hhplus.be.server.domain.Coupon;
 import kr.hhplus.be.server.domain.Order;
 import kr.hhplus.be.server.domain.Product;
 import kr.hhplus.be.server.domain.User;
@@ -20,12 +21,14 @@ public class OrderService {
     private final ProductRepository productRepository;
 
     private final PaymentService paymentService;
+    private final CouponService couponService;
 
-    public OrderService(OrderRepository orderRepository, PointRepository pointRepository, UserRepository userRepository, ProductRepository productRepository, PaymentService paymentService) {
+    public OrderService(OrderRepository orderRepository, PointRepository pointRepository, UserRepository userRepository, ProductRepository productRepository, PaymentService paymentService, CouponService couponService) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.paymentService = paymentService;
+        this.couponService = couponService;
     }
 
     /**
@@ -42,6 +45,9 @@ public class OrderService {
         // 주문시 재고확인 (조회 후 개수가 0보다 작으면 오류)
         Product product = productRepository.findById(requestOrder.productId())
                 .orElseThrow(() -> new RuntimeException("상품 미존재"));
+
+        // 쿠폰 조회
+        Coupon coupon = couponService.searchCoupon(requestOrder.couponId());
 
         if(product.getQuantity() <= 0) {
             throw new RuntimeException("상품 재고 부족");
@@ -69,8 +75,8 @@ public class OrderService {
         ResponseOrder responseOrder = new ResponseOrder(
                 user.getName(),
                 product.getName(),
-                "쿠폰1",
-                true,
+                coupon.getName(),
+                requestOrder.couponYn(),
                 requestOrder.originalPrice(),
                 requestOrder.requestPrice()
         );
