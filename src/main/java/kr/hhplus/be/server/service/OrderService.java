@@ -17,16 +17,15 @@ import org.springframework.stereotype.Service;
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final UserRepository userRepository;
-    private final ProductRepository productRepository;
-
+    private final ProductService productService;
+    private final UserService userService;
     private final PaymentService paymentService;
     private final CouponService couponService;
 
-    public OrderService(OrderRepository orderRepository, PointRepository pointRepository, UserRepository userRepository, ProductRepository productRepository, PaymentService paymentService, CouponService couponService) {
+    public OrderService(OrderRepository orderRepository, PointRepository pointRepository, UserRepository userRepository, ProductRepository productRepository, ProductService productService, UserService userService, PaymentService paymentService, CouponService couponService) {
         this.orderRepository = orderRepository;
-        this.userRepository = userRepository;
-        this.productRepository = productRepository;
+        this.productService = productService;
+        this.userService = userService;
         this.paymentService = paymentService;
         this.couponService = couponService;
     }
@@ -38,25 +37,14 @@ public class OrderService {
     @Transactional
     public ResponseOrder orderProduct(RequestOrder requestOrder) {
 
-        // 사용자 및 포인트 조회
-        User user = userRepository.findById(requestOrder.userId())
-                .orElseThrow(() -> new RuntimeException("사용자 미존재"));
+        // 사용자 조회 및 잔고확인
+        User user = userService.getUserAndCheckBalance(requestOrder.userId(), requestOrder.requestPrice());
 
-        // 주문시 재고확인 (조회 후 개수가 0보다 작으면 오류)
-        Product product = productRepository.findById(requestOrder.productId())
-                .orElseThrow(() -> new RuntimeException("상품 미존재"));
+        // 주문시 재고확인
+        Product product = productService.getProductInfo(requestOrder.productId());
 
         // 쿠폰 조회
         Coupon coupon = couponService.searchCoupon(requestOrder.couponId());
-
-        if(product.getQuantity() <= 0) {
-            throw new RuntimeException("상품 재고 부족");
-        }
-
-        // 잔고 확인
-        if(user.getPoint() < requestOrder.requestPrice()) {
-            throw new RuntimeException("잔고 부족");
-        }
 
         Order order = new Order(
                 user,
