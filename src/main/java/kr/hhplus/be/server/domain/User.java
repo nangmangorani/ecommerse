@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.domain;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.exception.custom.CustomException;
 
 import java.time.LocalDateTime;
 
@@ -35,7 +36,21 @@ public class User {
         this.registeredAt = LocalDateTime.now();
     }
 
+    public User(String name, String status, Long point) {
+        this.name = name;
+        this.status = status;
+        this.point = point;
+        this.registeredAt = LocalDateTime.now();
+    }
+
     public void addPoint(long amount) {
+        if(amount < 0) {
+            throw new CustomException("포인트는 음수일 수 없음");
+        }
+        else if (amount == 0) {
+            throw new CustomException("0원 충전 불가");
+        }
+
         this.point += amount;
     }
 

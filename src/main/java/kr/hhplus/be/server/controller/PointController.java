@@ -29,7 +29,6 @@ public class PointController {
     @PostMapping("/charge")
     public ResponseEntity<ResponseUserPoint> chargeUserPoint(@RequestBody RequestPointCharge requestPointCharge) {
 
-        System.out.println("들어옴? ");
         // 포인트 충전(서비스)
         ResponseUserPoint userPointInfo = pointService.chargePoint(requestPointCharge);
 

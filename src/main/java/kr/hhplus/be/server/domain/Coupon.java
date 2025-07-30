@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.domain;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.exception.custom.CustomException;
 import lombok.Getter;
 
 @Entity
@@ -46,7 +47,7 @@ public class Coupon {
     }
 
     public void issueCoupon() {
-        if (remainQuantity <= 0) throw new IllegalStateException("쿠폰 소진");
+        if (remainQuantity <= 0) throw new CustomException("쿠폰 소진");
         this.remainQuantity -= 1;
     }
 

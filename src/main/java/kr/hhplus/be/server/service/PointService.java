@@ -15,12 +15,12 @@ import java.util.Optional;
 @Service
 public class PointService {
 
-    private final UserRepository userRepository;
     private final PaymentService paymentService;
+    private final UserService userService;
 
-    public PointService(UserRepository userRepository, PaymentService paymentService) {
-        this.userRepository = userRepository;
+    public PointService(UserRepository userRepository, PaymentService paymentService, UserService userService) {
         this.paymentService = paymentService;
+        this.userService = userService;
     }
 
     /**
@@ -28,12 +28,10 @@ public class PointService {
      */
     public ResponseUserPoint getPoint(long id) {
 
-        Optional<User> optionalUser = userRepository.findById(id);
-
-        User user = optionalUser.orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        User user = userService.getUserInfo(id);
 
         if (user.getPoint() < 0) {
-            throw new RuntimeException();
+            throw new RuntimeException("포인트는 음수가 불가능");
         }
 
         return ResponseUserPoint.from(user);
@@ -45,17 +43,9 @@ public class PointService {
     @Transactional
     public ResponseUserPoint chargePoint(RequestPointCharge requestPointCharge) {
 
-        if (requestPointCharge.userPoint() < 0) {
-            throw new IllegalArgumentException("음수!!");
-        }
+        User user = userService.getUserInfo(requestPointCharge.userId());
 
-        // 사용자 조회 및 null 처리
-        User user = userRepository.findById(requestPointCharge.userId())
-                .orElseThrow(() -> new RuntimeException("조회없음!!"));
-
-        if (user.getPoint() < 0) {
-            throw new IllegalStateException();
-        }
+        user.addPoint(requestPointCharge.userPoint());
 
         User returnUser = paymentService.chargePoint(user, requestPointCharge);
 

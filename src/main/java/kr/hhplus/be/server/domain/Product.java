@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.domain;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.exception.custom.CustomException;
 
 @Entity
 @Table(name = "PRODUCT")
@@ -43,7 +44,7 @@ public class Product {
 
     public void decreaseStock(int amount) {
         if (quantity < amount) {
-            throw new IllegalArgumentException("재고 부족");
+            throw new CustomException("재고 부족");
         }
         this.quantity -= amount;
         this.sellQuantity += amount;

@@ -2,6 +2,7 @@ package kr.hhplus.be.server.service;
 
 import kr.hhplus.be.server.domain.Product;
 import kr.hhplus.be.server.dto.product.ResponseProduct;
+import kr.hhplus.be.server.exception.custom.CustomException;
 import kr.hhplus.be.server.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 
@@ -42,24 +43,22 @@ public class ProductService {
                 .toList();
     }
 
-    // 추후 변경예정 :: dto 객체변환 controller에서 수정
     public ResponseProduct getProduct(long id) {
 
         Optional<Product> product = productRepository.findById(id);
 
         return product
                 .map(ResponseProduct::from)
-                .orElseThrow(() -> new RuntimeException());
+                .orElseThrow(() -> new CustomException("상품이 존재하지 않음"));
     }
 
-    //
     public Product getProductInfo(long productId) {
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("상품이 존재하지않음"));
+                .orElseThrow(() -> new CustomException("상품이 존재하지 않음"));
 
         if (product.getQuantity() <= 0) {
-            throw new RuntimeException("상품 재고 부족");
+            throw new CustomException("상품 재고 부족");
         }
 
         return product;
