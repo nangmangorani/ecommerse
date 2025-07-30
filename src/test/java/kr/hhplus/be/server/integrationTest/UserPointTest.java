@@ -89,7 +89,7 @@ public class UserPointTest {
         String requestBodyJson = objectMapper.writeValueAsString(request);
 
         mockMvc.perform(post("/point/charge")
-                        .contentType(MediaType.APPLICATION_JSON)  // Content-Type 추가
+                        .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBodyJson))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("포인트는 음수일 수 없음"));
