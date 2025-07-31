@@ -37,11 +37,19 @@ public class OrderService {
     @Transactional
     public ResponseOrder orderProduct(RequestOrder requestOrder) {
 
+        String status = "01";
+
         // 사용자 조회 및 잔고확인
-        User user = userService.getUserAndCheckBalance(requestOrder.userId(), requestOrder.requestPrice());
+        User user = userService.getUserAndCheckBalance(requestOrder.userId(), requestOrder.requestPrice(), status);
+
+        // 포인트 차감
+        user.usePoint(requestOrder.requestPrice());
 
         // 주문시 재고확인
         Product product = productService.getProductInfo(requestOrder.productId());
+
+        // 상품 재고 차감
+        product.decreaseStock(requestOrder.requestQuantity());
 
         // 쿠폰 조회
         Coupon coupon = couponService.searchCoupon(requestOrder.couponId());
@@ -53,7 +61,6 @@ public class OrderService {
                 requestOrder.requestPrice(),
                 "02" // 결제진행
         );
-
         // 주문 추가
         Order returnOrder = orderRepository.save(order);
 
@@ -68,7 +75,6 @@ public class OrderService {
                 requestOrder.originalPrice(),
                 requestOrder.requestPrice()
         );
-
         return responseOrder;
     }
 }
