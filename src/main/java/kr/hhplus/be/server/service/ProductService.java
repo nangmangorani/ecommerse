@@ -23,7 +23,10 @@ public class ProductService {
      * @return List<ResponseProductList>
      */
     public List<ResponseProduct> getProductList() {
-        List<Product> products = productRepository.findAll();
+
+        String status = "01";
+
+        List<Product> products = productRepository.findByStatus(status);
 
         return products.stream()
                 .map(ResponseProduct::from)

@@ -15,13 +15,13 @@ public class UserService {
     }
 
     // 사용자조회
-    public User getUserInfo(long userId) {
-        return userRepository.findById(userId)
+    public User getUserInfo(long userId, String status) {
+        return userRepository.findByIdAndStatus(userId, status)
                 .orElseThrow(() -> new CustomException("사용자가 존재하지 않습니다."));
     }
 
-    public User getUserAndCheckBalance(long userId, long requiredPrice) {
-        User user = userRepository.findById(userId)
+    public User getUserAndCheckBalance(long userId, long requiredPrice, String status) {
+        User user = userRepository.findByIdAndStatus(userId, status)
                 .orElseThrow(() -> new CustomException("사용자가 존재하지 않습니다."));
 
         if (user.getPoint() < requiredPrice) {

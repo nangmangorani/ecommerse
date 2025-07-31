@@ -28,7 +28,9 @@ public class PointService {
      */
     public ResponseUserPoint getPoint(long id) {
 
-        User user = userService.getUserInfo(id);
+        String status = "01"; // 사용자 상태 정상
+
+        User user = userService.getUserInfo(id, status);
 
         if (user.getPoint() < 0) {
             throw new RuntimeException("포인트는 음수가 불가능");
@@ -43,9 +45,9 @@ public class PointService {
     @Transactional
     public ResponseUserPoint chargePoint(RequestPointCharge requestPointCharge) {
 
-        User user = userService.getUserInfo(requestPointCharge.userId());
+        String status = "01"; // 사용자 상태 정상
 
-        user.addPoint(requestPointCharge.userPoint());
+        User user = userService.getUserInfo(requestPointCharge.userId(), status);
 
         User returnUser = paymentService.chargePoint(user, requestPointCharge);
 
