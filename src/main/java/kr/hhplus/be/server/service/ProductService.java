@@ -2,6 +2,7 @@ package kr.hhplus.be.server.service;
 
 import kr.hhplus.be.server.domain.Product;
 import kr.hhplus.be.server.dto.product.ResponseProduct;
+import kr.hhplus.be.server.exception.custom.CustomException;
 import kr.hhplus.be.server.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +23,10 @@ public class ProductService {
      * @return List<ResponseProductList>
      */
     public List<ResponseProduct> getProductList() {
-        List<Product> products = productRepository.findAll();
+
+        String status = "01";
+
+        List<Product> products = productRepository.findByStatus(status);
 
         return products.stream()
                 .map(ResponseProduct::from)
@@ -48,6 +52,19 @@ public class ProductService {
 
         return product
                 .map(ResponseProduct::from)
-                .orElseThrow(() -> new RuntimeException());    }
+                .orElseThrow(() -> new CustomException("상품이 존재하지 않음"));
+    }
+
+    public Product getProductInfo(long productId) {
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new CustomException("상품이 존재하지 않음"));
+
+        if (product.getQuantity() <= 0) {
+            throw new CustomException("상품 재고 부족");
+        }
+
+        return product;
+    }
 
 }

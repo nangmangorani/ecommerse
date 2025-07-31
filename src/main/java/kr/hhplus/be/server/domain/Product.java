@@ -1,8 +1,11 @@
 package kr.hhplus.be.server.domain;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.exception.custom.CustomException;
+import lombok.Getter;
 
 @Entity
+@Getter
 @Table(name = "PRODUCT")
 public class Product {
 
@@ -41,20 +44,21 @@ public class Product {
         this.type = type;
     }
 
-    public void decreaseStock(int amount) {
-        if (quantity < amount) {
-            throw new IllegalArgumentException("재고 부족");
-        }
-        this.quantity -= amount;
+    public Product(String name, String status, int quantity, int sellQuantity,long price, String type) {
+        this.name = name;
+        this.status = status;
+        this.quantity = quantity;
+        this.sellQuantity = sellQuantity;
+        this.price = price;
+        this.type = type;
     }
 
-    public Long getId() { return id; }
-    public String getName() { return name; }
-    public long getPrice() { return price; }
-    public int getQuantity() { return quantity; }
-
-    public int getSellQuantity() {return sellQuantity;}
-
-    public String getProductType() { return type; }
+    public void decreaseStock(int amount) {
+        if (quantity < amount) {
+            throw new CustomException("요청수량보다 재고 부족");
+        }
+        this.quantity -= amount;
+        this.sellQuantity += amount;
+    }
 
 }

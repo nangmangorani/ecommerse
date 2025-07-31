@@ -2,11 +2,13 @@ package kr.hhplus.be.server.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import kr.hhplus.be.server.domain.Product;
 import kr.hhplus.be.server.dto.product.ResponseProduct;
 import kr.hhplus.be.server.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -37,5 +39,14 @@ public class ProductController {
 
         return ResponseEntity.ok(productListDto);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ResponseProduct> getProduct(@PathVariable("id") long id) {
+
+        ResponseProduct product = productService.getProduct(id);
+
+        return ResponseEntity.ok(product);
+    }
+
 
 }

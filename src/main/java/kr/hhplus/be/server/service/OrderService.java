@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.service;
 
 import jakarta.transaction.Transactional;
+import kr.hhplus.be.server.domain.Coupon;
 import kr.hhplus.be.server.domain.Order;
 import kr.hhplus.be.server.domain.Product;
 import kr.hhplus.be.server.domain.User;
@@ -16,16 +17,17 @@ import org.springframework.stereotype.Service;
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final UserRepository userRepository;
-    private final ProductRepository productRepository;
-
+    private final ProductService productService;
+    private final UserService userService;
     private final PaymentService paymentService;
+    private final CouponService couponService;
 
-    public OrderService(OrderRepository orderRepository, PointRepository pointRepository, UserRepository userRepository, ProductRepository productRepository, PaymentService paymentService) {
+    public OrderService(OrderRepository orderRepository, PointRepository pointRepository, UserRepository userRepository, ProductRepository productRepository, ProductService productService, UserService userService, PaymentService paymentService, CouponService couponService) {
         this.orderRepository = orderRepository;
-        this.userRepository = userRepository;
-        this.productRepository = productRepository;
+        this.productService = productService;
+        this.userService = userService;
         this.paymentService = paymentService;
+        this.couponService = couponService;
     }
 
     /**
@@ -35,22 +37,22 @@ public class OrderService {
     @Transactional
     public ResponseOrder orderProduct(RequestOrder requestOrder) {
 
-        // 사용자 및 포인트 조회
-        User user = userRepository.findById(requestOrder.userId())
-                .orElseThrow(() -> new RuntimeException("사용자 미존재"));
+        String status = "01";
 
-        // 주문시 재고확인 (조회 후 개수가 0보다 작으면 오류)
-        Product product = productRepository.findById(requestOrder.productId())
-                .orElseThrow(() -> new RuntimeException("상품 미존재"));
+        // 사용자 조회 및 잔고확인
+        User user = userService.getUserAndCheckBalance(requestOrder.userId(), requestOrder.requestPrice(), status);
 
-        if(product.getQuantity() <= 0) {
-            throw new RuntimeException("상품 재고 부족");
-        }
+        // 포인트 차감
+        user.usePoint(requestOrder.requestPrice());
 
-        // 잔고 확인
-        if(user.getPoint() < requestOrder.requestPrice()) {
-            throw new RuntimeException("잔고 부족");
-        }
+        // 주문시 재고확인
+        Product product = productService.getProductInfo(requestOrder.productId());
+
+        // 상품 재고 차감
+        product.decreaseStock(requestOrder.requestQuantity());
+
+        // 쿠폰 조회
+        Coupon coupon = couponService.searchCoupon(requestOrder.couponId());
 
         Order order = new Order(
                 user,
@@ -59,7 +61,6 @@ public class OrderService {
                 requestOrder.requestPrice(),
                 "02" // 결제진행
         );
-
         // 주문 추가
         Order returnOrder = orderRepository.save(order);
 
@@ -69,12 +70,11 @@ public class OrderService {
         ResponseOrder responseOrder = new ResponseOrder(
                 user.getName(),
                 product.getName(),
-                "쿠폰1",
-                true,
+                coupon.getName(),
+                requestOrder.couponYn(),
                 requestOrder.originalPrice(),
                 requestOrder.requestPrice()
         );
-
         return responseOrder;
     }
 }

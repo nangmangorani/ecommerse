@@ -6,8 +6,8 @@ import kr.hhplus.be.server.domain.Product;
 public record ResponseProduct(
         long productId,
         String productName,
-        int sellQuantitysellQuantity,
         int productQuantity,
+        int sellQuantity,
         long price,
         String productType
 ) {
@@ -18,7 +18,7 @@ public record ResponseProduct(
                 product.getQuantity(),
                 product.getSellQuantity(),
                 product.getPrice(),
-                product.getProductType()
+                product.getType()
         );
     }
 

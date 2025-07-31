@@ -37,12 +37,6 @@ public class PaymentService {
 
     public void paymentProduct(RequestOrder requestOrder, User user, Product product, Order order) {
 
-        // 포인트 차감
-        user.usePoint(requestOrder.requestPrice());
-
-        // 상품 재고 차감
-        product.decreaseStock(requestOrder.requestQuantity());
-
         // 결제이력 추가
         Payment payment = new Payment(
             "01",

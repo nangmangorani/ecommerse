@@ -44,7 +44,7 @@ public class CouponHist {
     }
 
     public void use() {
-        this.couponStatus = "USED";
+        this.couponStatus = "02";
         this.usedDateTime = LocalDateTime.now();
     }
 
