@@ -55,7 +55,7 @@ public class Product {
 
     public void decreaseStock(int amount) {
         if (quantity < amount) {
-            throw new CustomException("재고 부족");
+            throw new CustomException("요청수량보다 재고 부족");
         }
         this.quantity -= amount;
         this.sellQuantity += amount;
