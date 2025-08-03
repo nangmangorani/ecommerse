@@ -155,10 +155,10 @@ public class ProductServiceTest {
     @DisplayName("상품이 존재하지 않을 경우")
     void 상품이_존재하지_않을_경우() {
 
-        long id = 1;
+        Long id = 1L;
 
         // given
-        given(productRepository.findById(1)).willReturn(Optional.empty());
+        given(productRepository.findById(id)).willReturn(Optional.empty());
 
         // when, then
         assertThatThrownBy(() -> productService.getProduct(id))
@@ -187,10 +187,8 @@ public class ProductServiceTest {
         assertThat(result.productName()).isEqualTo(product.getName());
         assertThat(result.productQuantity()).isEqualTo(product.getQuantity());
         assertThat(result.price()).isEqualTo(product.getPrice());
-        assertThat(result.productType()).isEqualTo(product.getProductType());
+        assertThat(result.productType()).isEqualTo(product.getType());
 
     }
-
-
 
 }
