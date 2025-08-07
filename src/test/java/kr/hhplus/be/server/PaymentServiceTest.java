@@ -4,7 +4,7 @@ import kr.hhplus.be.TransactionType;
 import kr.hhplus.be.server.dto.order.RequestOrder;
 import kr.hhplus.be.server.repository.OrderRepository;
 import kr.hhplus.be.server.repository.PaymentRepository;
-import kr.hhplus.be.server.repository.PointRepository;
+import kr.hhplus.be.server.repository.PointHistRepository;
 import kr.hhplus.be.server.repository.ProductRepository;
 import kr.hhplus.be.server.domain.*;
 import kr.hhplus.be.server.service.OrderService;
@@ -31,7 +31,7 @@ public class PaymentServiceTest {
     private OrderRepository orderRepository;
 
     @Mock
-    private PointRepository pointRepository;
+    private PointHistRepository pointHistRepository;
 
     @Mock
     private ProductRepository productRepository;
@@ -60,12 +60,13 @@ public class PaymentServiceTest {
         Product product = new Product(1, "상품1", "Y", 2, 10, 1000L, "필기구");  // 생성자 예시
         PointHist pointHist = new PointHist(TransactionType.USE, 100L, 1000L,1);
         Payment payment = new Payment("01", 800, TransactionType.USE, 1L);
-        Order order = new Order(user, product, 1000L, 800L, "01");
+        Coupon coupon = new Coupon("쿠폰", "01", 10,10,5,1);
+        Order order = new Order(user, product, coupon, 1000L, 800L,1, "01");
 
         RequestOrder requestOrder = new RequestOrder(
                 user.getId(),
                 product.getId(),
-                1,
+                1L,
                 1,
                 1000,
                 800,
@@ -74,7 +75,7 @@ public class PaymentServiceTest {
 
         // given
         given(paymentRepository.save(any(Payment.class))).willReturn(payment);
-        given(pointRepository.save(any(PointHist.class))).willReturn(pointHist);
+        given(pointHistRepository.save(any(PointHist.class))).willReturn(pointHist);
 
         // when
         paymentService.paymentProduct(requestOrder, user, product, order);

@@ -1,11 +1,14 @@
 package kr.hhplus.be.server.domain;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.exception.custom.CustomException;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "ORDERS")
+@Getter
 public class Order {
 
     @Id
@@ -22,35 +25,61 @@ public class Order {
     @Column(name = "DISCOUNTED_PRICE")
     private long discountedPrice;
 
+    @Column(name = "REQUEST_QUANTITY")
+    private int requestQuantity;
+
     @Column(name = "ORDER_DATETIME", nullable = false)
     private LocalDateTime orderDateTime;
 
     @Column(name = "SOLD_DATETIME")
     private LocalDateTime soldDateTime;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "USER_ID", nullable = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "USER_ID", nullable = false
+            ,foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "PRODUCT_ID", nullable = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "PRODUCT_ID", nullable = false
+            ,foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Product product;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "COUPON_ID", nullable = true
+            ,foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    private Coupon coupon;
 
     protected Order() {}
 
-    public Order(User user, Product product, long originalPrice, long discountedPrice, String status) {
+    public Order(User user, Product product, Coupon coupon, long originalPrice, long discountedPrice, int requestQuantity ,String status) {
         this.user = user;
         this.product = product;
+        this.coupon = coupon;
         this.originalPrice = originalPrice;
         this.discountedPrice = discountedPrice;
+        this.requestQuantity = requestQuantity;
         this.status = status;
         this.orderDateTime = LocalDateTime.now();
     }
 
-    public static Order create(User user, Product product, int discountedPrice) {
-        return new Order(user, product, product.getPrice(), discountedPrice, "01");
+    public static Order create(User user, Product product, Coupon coupon, long discountedPrice, int requestQuantity) {
+        return new Order(user, product, coupon, product.getPrice(), discountedPrice, requestQuantity, "01");
     }
 
-    public Long getId() { return id; }
+    public void cancel() {
+        if ("03".equals(this.status)) {
+            throw new CustomException("이미 취소된 주문입니다.");
+        }
+
+        this.status = "03"; // 결제취소
+    }
+
+    public static boolean validatePrice(Product product, Coupon coupon) {
+//        if (coupon == null) return product.getPrice();
+
+//        long discountAmount = product.getPrice() * coupon.getDiscountPercent() / 100;
+//        return product.getPrice() - discountAmount;
+        return true;
+    }
 
 }

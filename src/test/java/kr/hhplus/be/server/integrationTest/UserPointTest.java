@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.hhplus.be.server.domain.User;
 import kr.hhplus.be.server.dto.point.RequestPointCharge;
 import kr.hhplus.be.server.repository.UserRepository;
-import kr.hhplus.be.server.service.PointService;
+import kr.hhplus.be.server.service.PointHistService;
 import kr.hhplus.be.server.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,7 +40,7 @@ public class UserPointTest {
     private UserService userService;
 
     @Autowired
-    private PointService pointService;
+    private PointHistService pointHistService;
 
     @Autowired
     private UserRepository userRepository;

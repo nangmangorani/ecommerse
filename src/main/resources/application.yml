@@ -14,12 +14,27 @@ spring:
   jpa:
     open-in-view: false
     generate-ddl: false
-    show-sql: false
+    ##show-sql: true                              # SQL 쿼리 출력 활성화
     hibernate:
       ddl-auto: update
     properties:
       hibernate.timezone.default_storage: NORMALIZE_UTC
       hibernate.jdbc.time_zone: UTC
+      hibernate:
+        format_sql: false                        # SQL 포맷팅
+        use_sql_comments: false                  # 주석 추가
+        show_sql: false                          # 추가 설정
+
+# 로그 레벨 설정 추가
+#logging:
+#  level:
+#    org.hibernate.SQL: DEBUG                    # SQL 쿼리 로그
+#    org.hibernate.type.descriptor.sql: TRACE   # 바인딩 파라미터 값
+#    org.hibernate.orm.jdbc.bind: TRACE         # Spring Boot 3.x용
+#    kr.hhplus.be.server: DEBUG                 # 애플리케이션 로그
+#    org.springframework.transaction: DEBUG     # 트랜잭션 로그
+#    org.springframework.orm.jpa: DEBUG         # JPA 관련 로그
+
 ---
 spring.config.activate.on-profile: local, test
 
@@ -29,3 +44,19 @@ spring:
     url: jdbc:mysql://localhost:3306/hhplus?characterEncoding=UTF-8&serverTimezone=UTC
     username: application
     password: application
+  jpa:
+    show-sql: false                              # 테스트에서도 SQL 출력
+    properties:
+      hibernate:
+        format_sql: false
+        use_sql_comments: false
+
+# 테스트 전용 로그 설정
+#logging:
+#  level:
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.type.descriptor.sql: TRACE
+#    org.hibernate.orm.jdbc.bind: TRACE
+#    kr.hhplus.be.server: DEBUG
+#    org.springframework.test: DEBUG             # 테스트 관련 로그
+#    org.springframework.transaction: DEBUG

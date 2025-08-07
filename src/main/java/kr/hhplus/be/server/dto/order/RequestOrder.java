@@ -1,9 +1,9 @@
 package kr.hhplus.be.server.dto.order;
 
 public record RequestOrder(
-        long userId,
-        long productId,
-        long couponId,
+        Long userId,
+        Long productId,
+        Long couponId,
         int requestQuantity,
         long originalPrice,
         long requestPrice,

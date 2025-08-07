@@ -5,6 +5,7 @@ import kr.hhplus.be.server.dto.product.ResponseProduct;
 import kr.hhplus.be.server.exception.custom.CustomException;
 import kr.hhplus.be.server.repository.ProductRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -55,16 +56,49 @@ public class ProductService {
                 .orElseThrow(() -> new CustomException("상품이 존재하지 않음"));
     }
 
-    public Product getProductInfo(long productId) {
+    public Product getProductInfo(long productId, long requestQuantity) {
 
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findByIdAndStatusWithLock(productId, "01")
                 .orElseThrow(() -> new CustomException("상품이 존재하지 않음"));
 
         if (product.getQuantity() <= 0) {
             throw new CustomException("상품 재고 부족");
         }
+        if(requestQuantity > product.getQuantity()) {
+            throw new CustomException("요청수량보다 재고 부족");
+        }
+
 
         return product;
     }
 
+    @Transactional
+    public void decreaseStockWithLock(Long productId, int quantity) {
+        System.out.println("=== 재고차감 시도: 스레드=" + Thread.currentThread().getName() + ", 상품ID=" + productId + ", 수량=" + quantity);
+
+        String status = "01";
+
+        // 1. 비관적 락으로 상품 조회
+        Product product = productRepository.findByIdAndStatusWithLock(productId, status)
+                .orElseThrow(() -> new CustomException("상품을 찾을 수 없습니다"));
+        System.out.println("=== 현재 재고: " + product.getQuantity() + ", 요청 수량: " + quantity);
+
+        // 2. 도메인 메소드로 재고 차감
+        product.decreaseStock(quantity);
+
+        System.out.println("=== 재고차감 완료: 남은 재고=" + product.getQuantity());
+
+    }
+
+    // 재고 증가 (롤백용)
+    @Transactional
+    public void increaseStock(Long productId, int quantity) {
+        // 1. 비관적 락으로 상품 조회 (동시성 제어)
+        Product product = productRepository.findByIdWithLock(productId)
+                .orElseThrow(() -> new CustomException("상품을 찾을 수 없습니다"));
+
+        // 2. 도메인 메소드로 재고 증가
+        product.increaseStock(quantity);
+
+    }
 }

@@ -7,8 +7,9 @@ import kr.hhplus.be.server.domain.Product;
 import kr.hhplus.be.server.domain.User;
 import kr.hhplus.be.server.dto.order.RequestOrder;
 import kr.hhplus.be.server.dto.order.ResponseOrder;
+import kr.hhplus.be.server.exception.custom.CustomException;
 import kr.hhplus.be.server.repository.OrderRepository;
-import kr.hhplus.be.server.repository.PointRepository;
+import kr.hhplus.be.server.repository.PointHistRepository;
 import kr.hhplus.be.server.repository.ProductRepository;
 import kr.hhplus.be.server.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,7 @@ public class OrderService {
     private final PaymentService paymentService;
     private final CouponService couponService;
 
-    public OrderService(OrderRepository orderRepository, PointRepository pointRepository, UserRepository userRepository, ProductRepository productRepository, ProductService productService, UserService userService, PaymentService paymentService, CouponService couponService) {
+    public OrderService(OrderRepository orderRepository, PointHistRepository pointHistRepository, UserRepository userRepository, ProductRepository productRepository, ProductService productService, UserService userService, PaymentService paymentService, CouponService couponService) {
         this.orderRepository = orderRepository;
         this.productService = productService;
         this.userService = userService;
@@ -46,7 +47,7 @@ public class OrderService {
         user.usePoint(requestOrder.requestPrice());
 
         // 주문시 재고확인
-        Product product = productService.getProductInfo(requestOrder.productId());
+        Product product = productService.getProductInfo(requestOrder.productId(), requestOrder.requestQuantity());
 
         // 상품 재고 차감
         product.decreaseStock(requestOrder.requestQuantity());
@@ -57,8 +58,10 @@ public class OrderService {
         Order order = new Order(
                 user,
                 product,
+                coupon,
                 requestOrder.originalPrice(),
                 requestOrder.requestPrice(),
+                requestOrder.requestQuantity(),
                 "02" // 결제진행
         );
         // 주문 추가
@@ -76,5 +79,26 @@ public class OrderService {
                 requestOrder.requestPrice()
         );
         return responseOrder;
+    }
+
+    @Transactional
+    public void completeOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new CustomException("주문을 찾을 수 없습니다"));
+    }
+
+    /**
+     * 주문취소
+     */
+    @Transactional
+    public void cancelOrder(Long orderId) {
+
+        // 1. 주문 조회
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new CustomException("주문을 찾을 수 없습니다"));
+
+        // 2. 주문 상태를 취소로 변경
+        order.cancel();
+
     }
 }
