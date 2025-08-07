@@ -3,27 +3,20 @@ package kr.hhplus.be.server.service;
 import jakarta.transaction.Transactional;
 import kr.hhplus.be.TransactionType;
 import kr.hhplus.be.server.dto.order.RequestOrder;
-import kr.hhplus.be.server.dto.order.ResponseOrder;
 import kr.hhplus.be.server.dto.point.RequestPointCharge;
-import kr.hhplus.be.server.repository.OrderRepository;
 import kr.hhplus.be.server.repository.PaymentRepository;
-import kr.hhplus.be.server.repository.PointRepository;
+import kr.hhplus.be.server.repository.PointHistRepository;
 import kr.hhplus.be.server.repository.ProductRepository;
 import kr.hhplus.be.server.domain.*;
 import org.springframework.stereotype.Service;
 
 @Service
 public class PaymentService {
-
-    private final PointRepository pointRepository;
-    private final ProductRepository productRepository;
-    private final OrderRepository orderRepository;
+    private final PointHistService pointHistService;
     private final PaymentRepository paymentRepository;
 
-    public PaymentService(PointRepository pointRepository, ProductRepository productRepository, OrderRepository orderRepository, PaymentRepository paymentRepository) {
-        this.pointRepository = pointRepository;
-        this.productRepository = productRepository;
-        this.orderRepository = orderRepository;
+    public PaymentService(PointHistService pointHistService, PaymentRepository paymentRepository) {
+        this.pointHistService = pointHistService;
         this.paymentRepository = paymentRepository;
     }
 
@@ -47,18 +40,30 @@ public class PaymentService {
 
         Payment returnPayment = paymentRepository.save(payment);
 
-        // 포인트 이력 저장
-        PointHist pointHist = new PointHist(
-                user,
+        pointHistService.createPointHist(user,
                 TransactionType.USE,
                 returnPayment.getPrice(),
                 user.getPoint(),
-                returnPayment.getId()
-        );
-
-        PointHist returnPointHist = pointRepository.save(pointHist);
-
+                returnPayment.getId());
     }
+
+    @Transactional
+    public Payment processPayment(long orderId, long amount) {
+        String status = "";
+
+        try {
+            status = "01";
+            Payment payment = Payment.create(status, amount, TransactionType.USE, orderId);
+            return paymentRepository.save(payment);
+
+
+        } catch (Exception e) {
+            status = "03";
+            Payment failedPayment = Payment.create(status, amount, TransactionType.USE, orderId);
+            return paymentRepository.save(failedPayment);
+        }
+    }
+
 
     public User chargePoint(User user, RequestPointCharge requestPointCharge) {
 
@@ -75,15 +80,11 @@ public class PaymentService {
         Payment returnPayment = paymentRepository.save(payment);
 
         // 포인트 이력 저장
-        PointHist pointHist = new PointHist(
-                user,
+        pointHistService.createPointHist(user,
                 TransactionType.CHARGE,
                 returnPayment.getPrice(),
                 user.getPoint(),
-                returnPayment.getId()
-        );
-
-        PointHist returnPointHist = pointRepository.save(pointHist);
+                returnPayment.getId());
 
         return user;
     }

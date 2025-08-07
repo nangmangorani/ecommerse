@@ -7,7 +7,8 @@ import lombok.Getter;
 @Entity
 @Getter
 @Table(name = "PRODUCT")
-public class Product {
+public class
+Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,11 +55,21 @@ public class Product {
     }
 
     public void decreaseStock(int amount) {
+        System.out.println("감소들어옴");
         if (quantity < amount) {
+            System.out.println("감소들어옴 설마나?");
             throw new CustomException("요청수량보다 재고 부족");
         }
         this.quantity -= amount;
         this.sellQuantity += amount;
+    }
+
+    public void increaseStock(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("증가할 수량은 0보다 커야 합니다.");
+        }
+
+        this.quantity += quantity;
     }
 
 }

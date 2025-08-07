@@ -10,19 +10,15 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-
 @Service
 public class CouponService {
 
     private final CouponRepository couponRepository;
     private final CouponHistService couponHistService;
-    private final PointService pointService;
 
-    public CouponService(CouponRepository couponRepository, CouponHistService couponHistService, PointService pointService) {
+    public CouponService(CouponRepository couponRepository, CouponHistService couponHistService) {
         this.couponRepository = couponRepository;
         this.couponHistService = couponHistService;
-        this.pointService = pointService;
     }
 
     @Transactional
@@ -69,5 +65,14 @@ public class CouponService {
         return couponRepository.findById(couponId)
                 .orElseThrow(() -> new CustomException("쿠폰없음"));
     }
+
+    public Coupon searchCouponByProductId(Long couponId) {
+        String status = "01";
+
+        return couponRepository.findCouponByProductIdAndStatus(couponId, status)
+                .orElseThrow(() -> new CustomException("상품에 부합한 쿠폰이 없음"));
+    }
+
+
 
 }

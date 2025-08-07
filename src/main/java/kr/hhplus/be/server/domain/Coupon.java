@@ -33,7 +33,7 @@ public class Coupon {
     private int remainQuantity;
 
     @Column(name = "PRODUCT_ID")
-    private long productId;
+    private Long productId;
 
     @Version
     private Long version = 0L;

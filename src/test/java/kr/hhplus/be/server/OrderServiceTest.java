@@ -4,7 +4,7 @@ import kr.hhplus.be.server.domain.Product;
 import kr.hhplus.be.server.domain.User;
 import kr.hhplus.be.server.dto.order.RequestOrder;
 import kr.hhplus.be.server.repository.OrderRepository;
-import kr.hhplus.be.server.repository.PointRepository;
+import kr.hhplus.be.server.repository.PointHistRepository;
 import kr.hhplus.be.server.repository.ProductRepository;
 import kr.hhplus.be.server.repository.UserRepository;
 import kr.hhplus.be.server.service.OrderService;
@@ -32,7 +32,7 @@ public class OrderServiceTest {
     private OrderRepository orderRepository;
 
     @Mock
-    private PointRepository pointRepository;
+    private PointHistRepository pointHistRepository;
 
     @Mock
     private ProductRepository productRepository;
@@ -56,7 +56,7 @@ public class OrderServiceTest {
     @DisplayName("주문 시 주문자가 조회되지 않을 때")
     void 주문시_주문자가_조회되지_않을때() {
 
-        RequestOrder requestOrder = new RequestOrder(1, 1, 1, 1,1000L, 100,true);
+        RequestOrder requestOrder = new RequestOrder(1L, 1L, 1L, 1,1000L, 100,true);
 
         // given
         given(userRepository.findById(requestOrder.userId())).willReturn(Optional.empty());
@@ -71,7 +71,7 @@ public class OrderServiceTest {
     @DisplayName("주문시 상품이 존재하지 않을 때")
     void 주문시_상품이_존재하지_않을때() {
 
-        RequestOrder requestOrder = new RequestOrder(1, 1, 1, 1,1000L, 100, true);
+        RequestOrder requestOrder = new RequestOrder(1L, 1L, 1L, 1,1000L, 100, true);
 
         User user = new User(1,"이승준", "Y", 1000L);
 
@@ -89,7 +89,7 @@ public class OrderServiceTest {
     @DisplayName("주문시 상품 재고가 부족할 때")
     void 주문시_상품재고가_부족할때() {
 
-        RequestOrder requestOrder = new RequestOrder(1, 1, 1, 1,1000L, 100, true);
+        RequestOrder requestOrder = new RequestOrder(1L, 1L, 1L, 1,1000L, 100, true);
         User user = new User(1,"이승준", "Y", 1000L);
         Product product = new Product(1,"상품1","Y",0,10,1000L,"필기구");
 
@@ -107,7 +107,7 @@ public class OrderServiceTest {
     @DisplayName("주문은 되었지만 잔고가 부족할 때")
     void 주문시_잔고가_부족할때() {
 
-        RequestOrder requestOrder = new RequestOrder(1, 1, 1, 1,11000L, 10000, true);
+        RequestOrder requestOrder = new RequestOrder(1L, 1L, 1L, 1,11000L, 10000, true);
         User user = new User(1,"이승준", "Y", 1000L);
         Product product = new Product(1,"상품1","Y",1,10,1000L,"필기구");
 
