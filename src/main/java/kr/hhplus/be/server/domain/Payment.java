@@ -2,11 +2,13 @@ package kr.hhplus.be.server.domain;
 
 import jakarta.persistence.*;
 import kr.hhplus.be.TransactionType;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "PAYMENT")
+@Getter
 public class Payment {
 
     @Id
@@ -20,6 +22,7 @@ public class Payment {
 
     @Column(name = "PAYMENT_PRICE", nullable = false)
     private long price;      // 결제 금액
+
     @Enumerated(EnumType.STRING)
     @Column(name = "PAYMENT_TYPE", length = 20, nullable = false)
     private TransactionType type;    // 결제 수단
@@ -47,12 +50,11 @@ public class Payment {
         this.paymentDate = LocalDateTime.now();
     }
 
-    public static Payment createCompletedPayment(long price, TransactionType type, Long orderNo) {
-        return new Payment("01", price, type, orderNo);
+    public static Payment create(String status, long price, TransactionType type, Long orderNo) {
+        return new Payment(status, price, type, orderNo);
     }
 
-    public Long getId() { return id; }
-    public long getPrice() { return price; }
-    public String getStatus() { return status; }
+
+
 
 }
