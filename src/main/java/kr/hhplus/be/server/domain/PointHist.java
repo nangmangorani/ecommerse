@@ -2,11 +2,13 @@ package kr.hhplus.be.server.domain;
 
 import jakarta.persistence.*;
 import kr.hhplus.be.TransactionType;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "POINT_HIST")
+@Getter
 public class PointHist {
 
     @Id
@@ -28,7 +30,9 @@ public class PointHist {
     private LocalDateTime transactionDateTime;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "USER_ID", nullable = false)
+    @JoinColumn(name = "USER_ID", nullable = false,
+            foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+
     private User user;
 
     @Column(name = "PAYMENT_ID")
