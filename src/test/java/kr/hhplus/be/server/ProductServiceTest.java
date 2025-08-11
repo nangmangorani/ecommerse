@@ -30,7 +30,6 @@ public class ProductServiceTest {
 
     @BeforeEach
     void setUp() {
-        // @Mock, @InjectMocks 어노테이션 필드 초기화
         MockitoAnnotations.openMocks(this);
 
     }

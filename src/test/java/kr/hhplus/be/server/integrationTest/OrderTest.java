@@ -137,16 +137,6 @@ public class OrderTest {
         User returnUser = userRepository.save(user);
 
         RequestOrder request = new RequestOrder(returnUser.getId(), product.getId(), coupon.getId(), 1, 1200000L,960000L, true);
-        System.out.println("--- RequestOrder 객체 생성 ---");
-        System.out.println("userId: " + returnUser.getId());
-        System.out.println("productId: " + product.getId());
-        System.out.println("couponId: " + coupon.getId());
-        System.out.println("getDiscountPercent: " + coupon.getDiscountPercent());
-        System.out.println("coupon.getProductId: " + coupon.getProductId());
-        System.out.println("quantity: " + 1);
-        System.out.println("originalPrice: " + 1200000L);
-        System.out.println("discountPrice: " + 960000L);
-        System.out.println("couponYn: " + true);
 
         String requestBodyJson = objectMapper.writeValueAsString(request);
 
@@ -187,7 +177,7 @@ public class OrderTest {
                     RequestOrder request = new RequestOrder(
                             user.getId(),
                             product.getId(),
-                            null,  // 쿠폰 없음
+                            null,
                             1,
                             100000L,
                             100000L,
@@ -219,18 +209,9 @@ public class OrderTest {
 
         long endTime = System.currentTimeMillis();
 
-        // 성능 및 결과 검증
-        System.out.println("=== 대용량 동시 주문 결과 ===");
-        System.out.println("총 처리 시간: " + (endTime - startTime) + "ms");
-        System.out.println("성공 주문: " + successCount.get());
-        System.out.println("실패 주문: " + failCount.get());
-        System.out.println("평균 처리 시간: " + (endTime - startTime) / threadCount + "ms/request");
-
-        // 모든 주문이 성공해야 함 (충분한 재고와 포인트 제공)
         assertThat(successCount.get()).isEqualTo(threadCount);
         assertThat(failCount.get()).isEqualTo(0);
 
-        // 처리 시간이 합리적인 범위 내에 있는지 확인 (30초 이내)
         assertThat(endTime - startTime).isLessThan(30000);
     }
     @Test
@@ -279,10 +260,6 @@ public class OrderTest {
 
         latch.await(30, TimeUnit.SECONDS);
         executorService.shutdown();
-
-        System.out.println("=== 재고 부족 동시성 테스트 결과 ===");
-        System.out.println("성공 주문: " + successCount.get());
-        System.out.println("실패 주문: " + failCount.get());
 
         // 정확히 10개만 성공해야 함
         assertThat(successCount.get()).isBetween(9, 10);

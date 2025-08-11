@@ -74,12 +74,4 @@ public class Order {
         this.status = "03"; // 결제취소
     }
 
-    public static boolean validatePrice(Product product, Coupon coupon) {
-//        if (coupon == null) return product.getPrice();
-
-//        long discountAmount = product.getPrice() * coupon.getDiscountPercent() / 100;
-//        return product.getPrice() - discountAmount;
-        return true;
-    }
-
 }

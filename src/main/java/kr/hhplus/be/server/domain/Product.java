@@ -55,9 +55,7 @@ Product {
     }
 
     public void decreaseStock(int amount) {
-        System.out.println("감소들어옴");
         if (quantity < amount) {
-            System.out.println("감소들어옴 설마나?");
             throw new CustomException("요청수량보다 재고 부족");
         }
         this.quantity -= amount;
