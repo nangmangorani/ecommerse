@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.hhplus.be.server.domain.Coupon;
 import kr.hhplus.be.server.domain.CouponHist;
 import kr.hhplus.be.server.dto.coupon.RequestUserCoupon;
+import kr.hhplus.be.server.enums.CouponHistStatus;
+import kr.hhplus.be.server.enums.CouponStatus;
 import kr.hhplus.be.server.repository.CouponHistRepository;
 import kr.hhplus.be.server.repository.CouponRepository;
 import kr.hhplus.be.server.service.CouponHistService;
@@ -72,16 +74,16 @@ public class CouponTest {
         couponHistRepository.deleteAll();
 
         couponHists = Arrays.asList(
-                new CouponHist(1L, 1L, 1L, "01"),
-                new CouponHist(1L, 2L, 1L, "01"),
-                new CouponHist(2L, 1L, 2L, "01"),
-                new CouponHist(3L, 3L, 3L, "01"),
-                new CouponHist(4L, 4L, 4L, "01"),
-                new CouponHist(5L, 4L, 5L, "01"),
-                new CouponHist(5L, 6L, 5L, "01"),
-                new CouponHist(6L, 5L, 6L, "01"),
-                new CouponHist(6L, 4L, 6L, "01"),
-                new CouponHist(6L, 2L, 6L, "01")
+                new CouponHist(1L, 1L, 1L, CouponHistStatus.ISSUED),
+                new CouponHist(1L, 2L, 1L, CouponHistStatus.ISSUED),
+                new CouponHist(2L, 1L, 2L, CouponHistStatus.ISSUED),
+                new CouponHist(3L, 3L, 3L, CouponHistStatus.ISSUED),
+                new CouponHist(4L, 4L, 4L, CouponHistStatus.ISSUED),
+                new CouponHist(5L, 4L, 5L, CouponHistStatus.ISSUED),
+                new CouponHist(5L, 6L, 5L, CouponHistStatus.ISSUED),
+                new CouponHist(6L, 5L, 6L, CouponHistStatus.ISSUED),
+                new CouponHist(6L, 4L, 6L, CouponHistStatus.ISSUED),
+                new CouponHist(6L, 2L, 6L, CouponHistStatus.ISSUED)
         );
 
         couponHistRepository.saveAll(couponHists);
@@ -123,7 +125,7 @@ public class CouponTest {
 
         coupon = new Coupon(
                 "쿠폰1",
-                "01",
+                CouponStatus.ACTIVE,
                 20,
                 10,
                 0,
@@ -150,7 +152,7 @@ public class CouponTest {
 
         coupon = new Coupon(
                 "쿠폰1",
-                "01",
+                CouponStatus.ACTIVE,
                 20,
                 10,
                 3,
@@ -178,7 +180,7 @@ public class CouponTest {
     void concurrentCouponIssue() throws InterruptedException {
         coupon = new Coupon(
                 "쿠폰1",
-                "01",
+                CouponStatus.ACTIVE,
                 20,
                 10,
                 1,

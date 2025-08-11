@@ -3,6 +3,7 @@ package kr.hhplus.be.server.integrationTest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.hhplus.be.server.domain.User;
 import kr.hhplus.be.server.dto.point.RequestPointCharge;
+import kr.hhplus.be.server.enums.UserStatus;
 import kr.hhplus.be.server.repository.UserRepository;
 import kr.hhplus.be.server.service.PointHistService;
 import kr.hhplus.be.server.service.UserService;
@@ -53,7 +54,7 @@ public class UserPointTest {
     void setUp() {
         userRepository.deleteAll();
 
-        testUser = new User("테스트유저1", "01", 5000L);
+        testUser = new User("테스트유저1", UserStatus.ACTIVE, 5000L);
         testUser = userRepository.save(testUser);
     }
 

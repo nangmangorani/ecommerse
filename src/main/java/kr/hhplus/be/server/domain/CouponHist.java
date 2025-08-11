@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.domain;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.enums.CouponHistStatus;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -15,14 +16,15 @@ public class CouponHist {
     @Column(name = "SEQ_NO")
     private Long id;
 
-    @Column(name = "COUPON_STATUS", length = 2, nullable = false)
-    private String couponStatus; // 쿠폰 상태 01:사용가능 02:사용
+    @Column(name = "COUPON_STATUS", length = 20, nullable = false)
+    @Enumerated(EnumType.STRING)
+    private CouponHistStatus couponStatus;
 
     @Column(name = "ISSUED_DATETIME", nullable = false)
-    private LocalDateTime issuedDateTime; // 발급 시간
+    private LocalDateTime issuedDateTime;
 
     @Column(name = "USED_DATETIME")
-    private LocalDateTime usedDateTime;   // 사용 시간
+    private LocalDateTime usedDateTime;
 
     @Column(name = "COUPON_ID")
     private Long couponId;
@@ -35,7 +37,7 @@ public class CouponHist {
 
     protected CouponHist() {}
 
-    public CouponHist(long couponId, long userId, long productId, String couponStatus) {
+    public CouponHist(long couponId, long userId, long productId, CouponHistStatus couponStatus) {
         this.couponId = couponId;
         this.userId = userId;
         this.productId = productId;
@@ -44,7 +46,7 @@ public class CouponHist {
     }
 
     public void use() {
-        this.couponStatus = "02";
+        this.couponStatus = CouponHistStatus.USED;
         this.usedDateTime = LocalDateTime.now();
     }
 

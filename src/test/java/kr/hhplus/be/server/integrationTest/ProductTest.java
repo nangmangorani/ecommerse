@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.integrationTest;
 
 import kr.hhplus.be.server.domain.Product;
+import kr.hhplus.be.server.enums.ProductStatus;
 import kr.hhplus.be.server.repository.ProductRepository;
 import kr.hhplus.be.server.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,16 +44,16 @@ public class ProductTest {
         productRepository.deleteAll();
 
         products = Arrays.asList(
-                new Product("iPhone 15", "01", 50, 25, 1200000L, "전자제품"),
-                new Product("삼성 갤럭시 S24", "01", 30, 15, 1100000L, "전자제품"),
-                new Product("나이키 에어맥스", "01", 100, 45, 150000L, "의류"),
-                new Product("아디다스 운동화", "01", 80, 32, 120000L, "의류"),
-                new Product("맥북 프로 14인치", "01", 20, 8, 2500000L, "전자제품"),
-                new Product("스타벅스 아메리카노", "01", 200, 180, 4500L, "음료"),
-                new Product("무선 블루투스 이어폰", "01", 150, 75, 80000L, "전자제품"),
-                new Product("리바이스 청바지", "01", 60, 28, 90000L, "의류"),
-                new Product("프리미엄 커피원두 1kg", "01", 40, 12, 35000L, "음료"),
-                new Product("게이밍 키보드", "01", 75, 41, 180000L, "전자제품")
+                new Product("iPhone 15", ProductStatus.ACTIVE, 50, 25, 1200000L, "전자제품"),
+                new Product("삼성 갤럭시 S24", ProductStatus.ACTIVE, 30, 15, 1100000L, "전자제품"),
+                new Product("나이키 에어맥스", ProductStatus.ACTIVE, 100, 45, 150000L, "의류"),
+                new Product("아디다스 운동화", ProductStatus.ACTIVE, 80, 32, 120000L, "의류"),
+                new Product("맥북 프로 14인치", ProductStatus.ACTIVE, 20, 8, 2500000L, "전자제품"),
+                new Product("스타벅스 아메리카노", ProductStatus.ACTIVE, 200, 180, 4500L, "음료"),
+                new Product("무선 블루투스 이어폰", ProductStatus.ACTIVE, 150, 75, 80000L, "전자제품"),
+                new Product("리바이스 청바지", ProductStatus.ACTIVE, 60, 28, 90000L, "의류"),
+                new Product("프리미엄 커피원두 1kg", ProductStatus.ACTIVE, 40, 12, 35000L, "음료"),
+                new Product("게이밍 키보드", ProductStatus.ACTIVE, 75, 41, 180000L, "전자제품")
         );
 
         productRepository.saveAll(products);

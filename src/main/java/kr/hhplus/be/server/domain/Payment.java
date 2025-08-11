@@ -1,7 +1,8 @@
 package kr.hhplus.be.server.domain;
 
 import jakarta.persistence.*;
-import kr.hhplus.be.TransactionType;
+import kr.hhplus.be.server.enums.PaymentStatus;
+import kr.hhplus.be.server.enums.TransactionType;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -17,8 +18,9 @@ public class Payment {
 
     private Long id;
 
-    @Column(name = "PAYMENT_STATUS", length = 2, nullable = false)
-    private String status;  // 결제 상태 01:결제완료 02:결제진행 03:결제취소
+    @Column(name = "PAYMENT_STATUS", length = 20, nullable = false)
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus status;  // 결제 상태 01:결제완료 02:결제진행 03:결제취소
 
     @Column(name = "PAYMENT_PRICE", nullable = false)
     private long price;      // 결제 금액
@@ -35,7 +37,7 @@ public class Payment {
 
     protected Payment() {}
 
-    public Payment(String status, long price, TransactionType type, Long orderNo) {
+    public Payment(PaymentStatus status, long price, TransactionType type, Long orderNo) {
         this.status = status;
         this.price = price;
         this.type = type;
@@ -43,14 +45,14 @@ public class Payment {
         this.paymentDate = LocalDateTime.now();
     }
 
-    public Payment(String status, long price, TransactionType type) {
+    public Payment(PaymentStatus status, long price, TransactionType type) {
         this.status = status;
         this.price = price;
         this.type = type;
         this.paymentDate = LocalDateTime.now();
     }
 
-    public static Payment create(String status, long price, TransactionType type, Long orderNo) {
+    public static Payment create(PaymentStatus status, long price, TransactionType type, Long orderNo) {
         return new Payment(status, price, type, orderNo);
     }
 

@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.domain;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.enums.CouponStatus;
 import kr.hhplus.be.server.exception.custom.CustomException;
 import lombok.Getter;
 
@@ -17,8 +18,9 @@ public class Coupon {
     @Column(name = "COUPON_NAME", length = 100, nullable = false)
     private String name;
 
-    @Column(name = "COUPON_STATUS", length = 2, nullable = false)
-    private String status;
+    @Column(name = "COUPON_STATUS", length = 20, nullable = false)
+    @Enumerated(EnumType.STRING)
+    private CouponStatus status;
 
     @Column(name = "COUPON_TYPE", length = 2)
     private String type;
@@ -40,7 +42,7 @@ public class Coupon {
 
     protected Coupon() {}
 
-    public Coupon(String name, String status, int discountPercent, int maxQuantity, int remainQuantity, long productId) {
+    public Coupon(String name, CouponStatus status, int discountPercent, int maxQuantity, int remainQuantity, long productId) {
         this.name = name;
         this.status = status;
         this.discountPercent = discountPercent;

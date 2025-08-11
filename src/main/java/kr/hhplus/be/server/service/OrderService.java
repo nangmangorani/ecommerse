@@ -7,6 +7,7 @@ import kr.hhplus.be.server.domain.Product;
 import kr.hhplus.be.server.domain.User;
 import kr.hhplus.be.server.dto.order.RequestOrder;
 import kr.hhplus.be.server.dto.order.ResponseOrder;
+import kr.hhplus.be.server.enums.OrderStatus;
 import kr.hhplus.be.server.exception.custom.CustomException;
 import kr.hhplus.be.server.repository.OrderRepository;
 import kr.hhplus.be.server.repository.PointHistRepository;
@@ -38,8 +39,6 @@ public class OrderService {
     @Transactional
     public ResponseOrder orderProduct(RequestOrder requestOrder) {
 
-        String status = "01";
-
         // 사용자 조회 및 잔고확인
         User user = userService.getUserAndCheckBalance(requestOrder);
 
@@ -62,7 +61,7 @@ public class OrderService {
                 requestOrder.originalPrice(),
                 requestOrder.requestPrice(),
                 requestOrder.requestQuantity(),
-                "02" // 결제진행
+                OrderStatus.IN_PROGRESS
         );
         // 주문 추가
         Order returnOrder = orderRepository.save(order);

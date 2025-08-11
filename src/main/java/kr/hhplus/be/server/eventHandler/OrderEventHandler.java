@@ -1,8 +1,9 @@
 package kr.hhplus.be.server.eventHandler;
 
 import jakarta.annotation.PreDestroy;
-import kr.hhplus.be.TransactionType;
+import kr.hhplus.be.server.enums.TransactionType;
 import kr.hhplus.be.server.domain.Payment;
+import kr.hhplus.be.server.enums.UserStatus;
 import kr.hhplus.be.server.exception.custom.CustomException;
 import kr.hhplus.be.server.service.*;
 import org.springframework.context.event.EventListener;
@@ -70,15 +71,15 @@ public class OrderEventHandler {
                     event.getRequestPrice()
             );
 
-            if ("01".equals(result.getStatus())) {
+            if (result.getStatus().isCompleted()) {
                 // 주문 완료 처리
                 orderService.completeOrder(event.getOrderId());
 
                 pointHistService.createPointHist(
-                        userService.getUserInfo(event.getUserId(), "01"),
+                        userService.getUserInfo(event.getUserId(), UserStatus.ACTIVE),
                         TransactionType.USE,
                         event.getRequestPrice(),
-                        userService.getUserInfo(event.getUserId(), "01").getPoint(),
+                        userService.getUserInfo(event.getUserId(), UserStatus.ACTIVE).getPoint(),
                         result.getId()  // 결제 ID
                 );
 

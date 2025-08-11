@@ -3,6 +3,9 @@ package kr.hhplus.be.server.integrationTest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.hhplus.be.server.domain.*;
 import kr.hhplus.be.server.dto.order.RequestOrder;
+import kr.hhplus.be.server.enums.CouponStatus;
+import kr.hhplus.be.server.enums.ProductStatus;
+import kr.hhplus.be.server.enums.UserStatus;
 import kr.hhplus.be.server.repository.*;
 import kr.hhplus.be.server.service.OrderService;
 import kr.hhplus.be.server.service.PaymentService;
@@ -85,12 +88,10 @@ public class OrderTest {
         userRepository.deleteAll();
         couponRepository.deleteAll();
 
-//        user = new User("테스트유저1", "01", 5000L);
-
-        product = new Product("iPhone 15", "01", 1, 25, 1200000L, "전자제품");
+        product = new Product("iPhone 15", ProductStatus.ACTIVE, 1, 25, 1200000L, "전자제품");
         product = productRepository.save(product);
 
-        coupon = new Coupon("쿠폰1", "01", 20, 10, 3, product.getId());
+        coupon = new Coupon("쿠폰1", CouponStatus.ACTIVE, 20, 10, 3, product.getId());
         coupon = couponRepository.save(coupon);
     }
 
@@ -98,7 +99,7 @@ public class OrderTest {
     @DisplayName("사용자 잔고 부족")
     void hasSufficientBalance() throws Exception {
 
-        user = new User("테스트유저1", "01", 5000L);
+        user = new User("테스트유저1", UserStatus.ACTIVE, 5000L);
         User returnUser = userRepository.save(user);
 
         RequestOrder request = new RequestOrder(returnUser.getId(), product.getId(), coupon.getId(), 1, 1200000L,960000L, true);
@@ -115,7 +116,7 @@ public class OrderTest {
     @Test
     @DisplayName("요청수량보다 재고 부족")
     void hasSufficientQuantity() throws Exception {
-        user = new User("테스트유저1", "01", 5000000L);
+        user = new User("테스트유저1", UserStatus.ACTIVE, 5000000L);
         User returnUser = userRepository.save(user);
 
         RequestOrder request = new RequestOrder(returnUser.getId(), product.getId(), coupon.getId(), 2, 2400000L,1920000L, true);
@@ -133,7 +134,7 @@ public class OrderTest {
     @Test
     @DisplayName("결제 성공")
     void successPayment() throws Exception {
-        user = new User("테스트유저1", "01", 5000000L);
+        user = new User("테스트유저1", UserStatus.ACTIVE, 5000000L);
         User returnUser = userRepository.save(user);
 
         RequestOrder request = new RequestOrder(returnUser.getId(), product.getId(), coupon.getId(), 1, 1200000L,960000L, true);
@@ -156,10 +157,10 @@ public class OrderTest {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void massiveConcurrentOrders() throws InterruptedException {
         // 충분한 재고와 포인트 설정
-        product = new Product("대용량상품", "01", 1000, 1000, 100000L, "테스트");
+        product = new Product("대용량상품", ProductStatus.ACTIVE, 1000, 1000, 100000L, "테스트");
         product = productRepository.save(product);
 
-        user = new User("테스트유저1", "01", 5000000L);
+        user = new User("테스트유저1", UserStatus.ACTIVE, 5000000L);
         user = userRepository.save(user);
 
         int threadCount = 100; // 100개 스레드
@@ -219,10 +220,10 @@ public class OrderTest {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void concurrentOrdersWithInsufficientStock() throws InterruptedException {
 
-        product = new Product("제한재고상품", "01", 10, 10, 100000L, "테스트");
+        product = new Product("제한재고상품", ProductStatus.ACTIVE, 10, 10, 100000L, "테스트");
         product = productRepository.save(product);
 
-        user = new User("테스트유저1", "01", 50000000L);
+        user = new User("테스트유저1", UserStatus.ACTIVE, 50000000L);
         user = userRepository.save(user);
 
         int threadCount = 50; // 상품 50개 요청

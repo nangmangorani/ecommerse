@@ -1,13 +1,11 @@
 package kr.hhplus.be.server.service;
 
-import kr.hhplus.be.TransactionType;
-import kr.hhplus.be.server.domain.PointHist;
 import kr.hhplus.be.server.domain.User;
 import kr.hhplus.be.server.dto.order.RequestOrder;
 import kr.hhplus.be.server.dto.point.RequestPointCharge;
 import kr.hhplus.be.server.dto.point.ResponseUserPoint;
+import kr.hhplus.be.server.enums.UserStatus;
 import kr.hhplus.be.server.exception.custom.CustomException;
-import kr.hhplus.be.server.repository.PointHistRepository;
 import kr.hhplus.be.server.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,16 +24,14 @@ public class UserService {
     }
 
     // 사용자조회
-    public User getUserInfo(long userId, String status) {
+    public User getUserInfo(long userId, UserStatus status) {
         return userRepository.findByIdAndStatus(userId, status)
                 .orElseThrow(() -> new CustomException("사용자가 존재하지 않습니다."));
     }
 
     public User getUserAndCheckBalance(RequestOrder requestOrder) {
 
-        String status = "01";
-
-        User user = userRepository.findByIdAndStatus(requestOrder.userId(), status)
+        User user = userRepository.findByIdAndStatus(requestOrder.userId(), UserStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException("사용자가 존재하지 않습니다."));
 
         user.checkPoint(requestOrder.requestPrice(), user.getPoint());
@@ -46,9 +42,7 @@ public class UserService {
     @Transactional
     public void deductPointsWithLock(Long userId, long amount) {
 
-        String status = "01";
-
-        User user = userRepository.findByIdAndStatusWithLock(userId, status)
+        User user = userRepository.findByIdAndStatusWithLock(userId, UserStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException("사용자를 찾을 수 없습니다"));
 
         user.usePoint(amount);
@@ -56,7 +50,7 @@ public class UserService {
 
     @Transactional
     public void refundPoints(Long userId, long amount) {
-        User user = userRepository.findByIdAndStatus(userId, "01")
+        User user = userRepository.findByIdAndStatus(userId, UserStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException("사용자를 찾을 수 없습니다: " + userId));
 
         user.addPoint((int) amount);
@@ -68,9 +62,7 @@ public class UserService {
     @Transactional
     public ResponseUserPoint chargePoint(RequestPointCharge requestPointCharge) {
 
-        String status = "01"; // 사용자 상태 정상
-
-        User user = getUserInfo(requestPointCharge.userId(), status);
+        User user = getUserInfo(requestPointCharge.userId(), UserStatus.ACTIVE);
 
         User returnUser = paymentService.chargePoint(user, requestPointCharge);
 
@@ -82,9 +74,7 @@ public class UserService {
      */
     public ResponseUserPoint getPoint(long id) {
 
-        String status = "01"; // 사용자 상태 정상
-
-        User user = getUserInfo(id, status);
+        User user = getUserInfo(id, UserStatus.ACTIVE);
 
         if (user.getPoint() < 0) {
             throw new RuntimeException("포인트는 음수가 불가능");

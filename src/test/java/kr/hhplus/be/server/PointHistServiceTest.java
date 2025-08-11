@@ -1,6 +1,6 @@
 package kr.hhplus.be.server;
 
-import kr.hhplus.be.TransactionType;
+import kr.hhplus.be.server.enums.TransactionType;
 import kr.hhplus.be.server.domain.PointHist;
 import kr.hhplus.be.server.domain.User;
 import kr.hhplus.be.server.dto.point.RequestPointCharge;

@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.domain;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.enums.OrderStatus;
 import kr.hhplus.be.server.exception.custom.CustomException;
 import lombok.Getter;
 
@@ -16,8 +17,9 @@ public class Order {
     @Column(name = "ORDER_NO")
     private Long id;
 
-    @Column(name = "ORDER_STATUS", length = 2, nullable = false)
-    private String status; // 01:결제완료 02:결제진행 03:결제취소
+    @Column(name = "ORDER_STATUS", length = 20, nullable = false)
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status;
 
     @Column(name = "ORIGINAL_PRICE", nullable = false)
     private long originalPrice;
@@ -51,7 +53,7 @@ public class Order {
 
     protected Order() {}
 
-    public Order(User user, Product product, Coupon coupon, long originalPrice, long discountedPrice, int requestQuantity ,String status) {
+    public Order(User user, Product product, Coupon coupon, long originalPrice, long discountedPrice, int requestQuantity ,OrderStatus status) {
         this.user = user;
         this.product = product;
         this.coupon = coupon;
@@ -62,16 +64,16 @@ public class Order {
         this.orderDateTime = LocalDateTime.now();
     }
 
-    public static Order create(User user, Product product, Coupon coupon, long discountedPrice, int requestQuantity) {
-        return new Order(user, product, coupon, product.getPrice(), discountedPrice, requestQuantity, "01");
+    public static Order create(User user, Product product, Coupon coupon, long discountedPrice, int requestQuantity, OrderStatus orderStatus) {
+        return new Order(user, product, coupon, product.getPrice(), discountedPrice, requestQuantity, orderStatus);
     }
 
     public void cancel() {
-        if ("03".equals(this.status)) {
+        if (this.status == OrderStatus.CANCELLED) {
             throw new CustomException("이미 취소된 주문입니다.");
         }
 
-        this.status = "03"; // 결제취소
+        this.status = OrderStatus.CANCELLED;
     }
 
 }

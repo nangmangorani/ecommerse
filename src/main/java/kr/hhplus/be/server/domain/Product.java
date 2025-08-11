@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.domain;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.enums.ProductStatus;
 import kr.hhplus.be.server.exception.custom.CustomException;
 import lombok.Getter;
 
@@ -18,8 +19,9 @@ Product {
     @Column(name = "PRODUCT_NAME", length = 100, nullable = false)
     private String name;
 
-    @Column(name = "PRD_STATUS", length = 7, nullable = false)
-    private String status;
+    @Column(name = "PRD_STATUS", length = 20, nullable = false)
+    @Enumerated(EnumType.STRING)
+    private ProductStatus status;
 
     @Column(name = "PRODUCT_QUANTITY", nullable = false)
     private int quantity;
@@ -35,7 +37,7 @@ Product {
 
     protected Product() {}
 
-    public Product(long id, String name, String status, int quantity, int sellQuantity,long price, String type) {
+    public Product(long id, String name, ProductStatus status, int quantity, int sellQuantity,long price, String type) {
         this.id = id;
         this.name = name;
         this.status = status;
@@ -45,7 +47,7 @@ Product {
         this.type = type;
     }
 
-    public Product(String name, String status, int quantity, int sellQuantity,long price, String type) {
+    public Product(String name, ProductStatus status, int quantity, int sellQuantity,long price, String type) {
         this.name = name;
         this.status = status;
         this.quantity = quantity;

@@ -5,6 +5,7 @@ import kr.hhplus.be.server.domain.CouponHist;
 import kr.hhplus.be.server.domain.Product;
 import kr.hhplus.be.server.dto.coupon.RequestUserCoupon;
 import kr.hhplus.be.server.dto.coupon.ResponseUserCoupon;
+import kr.hhplus.be.server.enums.CouponStatus;
 import kr.hhplus.be.server.exception.custom.CustomException;
 import kr.hhplus.be.server.repository.CouponRepository;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -68,9 +69,7 @@ public class CouponService {
     }
 
     public Coupon searchCouponByProductId(Long productId) {
-        String status = "01";
-
-        return couponRepository.findCouponByProductIdAndStatus(productId, status)
+        return couponRepository.findCouponByProductIdAndStatus(productId, CouponStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException("상품에 부합한 쿠폰이 없음"));
     }
 

@@ -6,6 +6,7 @@ import kr.hhplus.be.server.domain.Product;
 import kr.hhplus.be.server.domain.User;
 import kr.hhplus.be.server.dto.order.RequestOrder;
 import kr.hhplus.be.server.dto.order.ResponseOrder;
+import kr.hhplus.be.server.enums.OrderStatus;
 import kr.hhplus.be.server.eventHandler.OrderCreatedEvent;
 import kr.hhplus.be.server.eventHandler.OrderEventPublisher;
 import kr.hhplus.be.server.exception.custom.CustomException;
@@ -61,7 +62,7 @@ public class OrderFacade {
 
         long expectedDiscountPrice = couponService.calculateDiscountedPrice(product, coupon);
 
-        Order order = Order.create(user, product, coupon, expectedDiscountPrice, request.requestQuantity());
+        Order order = Order.create(user, product, coupon, expectedDiscountPrice, request.requestQuantity(), OrderStatus.IN_PROGRESS);
 
         return orderRepository.save(order);
     }

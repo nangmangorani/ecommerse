@@ -1,6 +1,9 @@
 package kr.hhplus.be.server;
 
-import kr.hhplus.be.TransactionType;
+import kr.hhplus.be.server.enums.CouponStatus;
+import kr.hhplus.be.server.enums.OrderStatus;
+import kr.hhplus.be.server.enums.PaymentStatus;
+import kr.hhplus.be.server.enums.TransactionType;
 import kr.hhplus.be.server.dto.order.RequestOrder;
 import kr.hhplus.be.server.repository.OrderRepository;
 import kr.hhplus.be.server.repository.PaymentRepository;
@@ -58,9 +61,9 @@ public class PaymentServiceTest {
         User user = new User(1, "이승준", "Y", 5000L);  // 생성자 예시
         Product product = new Product(1, "상품1", "Y", 2, 10, 1000L, "필기구");  // 생성자 예시
         PointHist pointHist = new PointHist(TransactionType.USE, 100L, 1000L,1);
-        Payment payment = new Payment("01", 800, TransactionType.USE, 1L);
-        Coupon coupon = new Coupon("쿠폰", "01", 10,10,5,1);
-        Order order = new Order(user, product, coupon, 1000L, 800L,1, "01");
+        Payment payment = new Payment(PaymentStatus.COMPLETED, 800, TransactionType.USE, 1L);
+        Coupon coupon = new Coupon("쿠폰", CouponStatus.ACTIVE, 10,10,5,1);
+        Order order = new Order(user, product, coupon, 1000L, 800L,1, OrderStatus.COMPLETED);
 
         RequestOrder requestOrder = new RequestOrder(
                 user.getId(),
