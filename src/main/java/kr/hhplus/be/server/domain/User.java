@@ -2,11 +2,13 @@ package kr.hhplus.be.server.domain;
 
 import jakarta.persistence.*;
 import kr.hhplus.be.server.exception.custom.CustomException;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "USERS")
+@Getter
 public class User {
 
     @Id
@@ -61,8 +63,11 @@ public class User {
         this.point -= amount;
     }
 
-    public Long getId() { return id; }
-    public String getName() { return name; }
-    public Long getPoint() { return point; }
+    public void checkPoint(long requestAmount, long userAmount) {
+        if(userAmount < requestAmount) {
+            throw new CustomException("잔고 부족");
+        }
+    }
+
 
 }

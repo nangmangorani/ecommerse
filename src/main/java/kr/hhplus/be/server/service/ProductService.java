@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.service;
 
 import kr.hhplus.be.server.domain.Product;
+import kr.hhplus.be.server.dto.order.RequestOrder;
 import kr.hhplus.be.server.dto.product.ResponseProduct;
 import kr.hhplus.be.server.exception.custom.CustomException;
 import kr.hhplus.be.server.repository.ProductRepository;
@@ -56,18 +57,14 @@ public class ProductService {
                 .orElseThrow(() -> new CustomException("상품이 존재하지 않음"));
     }
 
-    public Product getProductInfo(long productId, long requestQuantity) {
+    public Product getProductInfo(RequestOrder requestOrder) {
 
-        Product product = productRepository.findByIdAndStatusWithLock(productId, "01")
+        Product product = productRepository.findByIdAndStatusWithLock(requestOrder.productId(), "01")
                 .orElseThrow(() -> new CustomException("상품이 존재하지 않음"));
 
-        if (product.getQuantity() <= 0) {
-            throw new CustomException("상품 재고 부족");
-        }
-        if(requestQuantity > product.getQuantity()) {
-            throw new CustomException("요청수량보다 재고 부족");
-        }
+        product.checkPrice(requestOrder.originalPrice(), product.getPrice());
 
+        product.checkQuantity(requestOrder.requestQuantity(), product.getQuantity());
 
         return product;
     }

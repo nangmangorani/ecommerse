@@ -2,6 +2,7 @@ package kr.hhplus.be.server.service;
 
 import kr.hhplus.be.server.domain.Coupon;
 import kr.hhplus.be.server.domain.CouponHist;
+import kr.hhplus.be.server.domain.Product;
 import kr.hhplus.be.server.dto.coupon.RequestUserCoupon;
 import kr.hhplus.be.server.dto.coupon.ResponseUserCoupon;
 import kr.hhplus.be.server.exception.custom.CustomException;
@@ -66,11 +67,24 @@ public class CouponService {
                 .orElseThrow(() -> new CustomException("쿠폰없음"));
     }
 
-    public Coupon searchCouponByProductId(Long couponId) {
+    public Coupon searchCouponByProductId(Long productId) {
         String status = "01";
 
-        return couponRepository.findCouponByProductIdAndStatus(couponId, status)
+        return couponRepository.findCouponByProductIdAndStatus(productId, status)
                 .orElseThrow(() -> new CustomException("상품에 부합한 쿠폰이 없음"));
+    }
+
+    public long calculateDiscountedPrice(Product product, Coupon coupon) {
+
+        long expectedDiscountPrice;
+
+        if (coupon != null) {
+            expectedDiscountPrice = product.getPrice() - (product.getPrice() * coupon.getDiscountPercent() / 100);
+        } else {
+            expectedDiscountPrice = product.getPrice();
+        }
+
+        return expectedDiscountPrice;
     }
 
 

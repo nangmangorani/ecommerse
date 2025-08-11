@@ -41,13 +41,13 @@ public class OrderService {
         String status = "01";
 
         // 사용자 조회 및 잔고확인
-        User user = userService.getUserAndCheckBalance(requestOrder.userId(), requestOrder.requestPrice(), status);
+        User user = userService.getUserAndCheckBalance(requestOrder);
 
         // 포인트 차감
         user.usePoint(requestOrder.requestPrice());
 
         // 주문시 재고확인
-        Product product = productService.getProductInfo(requestOrder.productId(), requestOrder.requestQuantity());
+        Product product = productService.getProductInfo(requestOrder);
 
         // 상품 재고 차감
         product.decreaseStock(requestOrder.requestQuantity());

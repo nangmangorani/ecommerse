@@ -25,27 +25,21 @@ public class OrderFacade {
     private final UserService userService;
     private final CouponService couponService;
     private final ProductService productService;
-    private final ProductRepository productRepository;
 
 
-    public OrderFacade(OrderRepository orderRepository, UserRepository userRepository, ProductRepository productRepository, OrderEventPublisher orderEventPublisher, CouponRepository couponRepository, UserService userService, CouponService couponService, ProductService productService) {
+    public OrderFacade(OrderRepository orderRepository, OrderEventPublisher orderEventPublisher, UserService userService, CouponService couponService, ProductService productService) {
         this.orderRepository = orderRepository;
         this.orderEventPublisher = orderEventPublisher;
         this.userService = userService;
         this.couponService = couponService;
         this.productService = productService;
-        this.productRepository = productRepository;
     }
 
     @Transactional(timeout = 30)
     public ResponseOrder processOrder(RequestOrder request) {
 
-        // 1. 핵심 주문 생성만 트랜잭션으로 처리
         Order order = createOrderCore(request);
 
-        System.out.println("비동기처리전!@!@@");
-
-        // 2. 비동기 후속 처리 이벤트 발행
         orderEventPublisher.publishOrderCreated(OrderCreatedEvent.of(order));
 
         return ResponseOrder.from(order);
@@ -53,19 +47,11 @@ public class OrderFacade {
 
     private Order createOrderCore(RequestOrder request) {
 
-        String status = "01";
+        User user = userService.getUserAndCheckBalance(request);
 
-        User user = userService.getUserAndCheckBalance(request.userId(), request.requestPrice(), status);
+        Product product = productService.getProductInfo(request);
 
         productService.decreaseStockWithLock(request.productId(), request.requestQuantity());
-
-        Product product = productRepository.findById(request.productId())
-                .orElseThrow(() -> new CustomException("상품이 존재하지 않습니다."));
-
-        // 요청한 상품원금과 실제 상품 가격 검증
-        if (request.originalPrice() != product.getPrice()) {
-            throw new CustomException("상품 가격이 일치하지 않습니다.");
-        }
 
         Coupon coupon = null;
 
@@ -73,20 +59,9 @@ public class OrderFacade {
             coupon = couponService.searchCouponByProductId(request.productId());
         }
 
-        // 쿠폰 할인금액과 사용자 요청금액 검증
-        long expectedDiscountPrice;
+        long expectedDiscountPrice = couponService.calculateDiscountedPrice(product, coupon);
 
-        if (coupon != null) {
-            expectedDiscountPrice = product.getPrice() - (product.getPrice() * coupon.getDiscountPercent() / 100);
-        } else {
-            expectedDiscountPrice = product.getPrice();
-        }
-
-        if (user.getPoint() < request.requestPrice()) {
-            throw new CustomException("잔고부족");
-        }
-
-        Order order = Order.create(user, product, coupon, request.requestPrice(), request.requestQuantity());
+        Order order = Order.create(user, product, coupon, expectedDiscountPrice, request.requestQuantity());
 
         return orderRepository.save(order);
     }

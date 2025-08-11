@@ -72,4 +72,22 @@ Product {
         this.quantity += quantity;
     }
 
+    // 상품원가검증과 할인가검증은 현재 하나의 메소드에서 처리
+    public void checkPrice(long requestPrice, long productPrice) {
+        if(requestPrice != productPrice) {
+            throw new CustomException("요청하신 상품 금액이 다릅니다.");
+        }
+    }
+
+    public void checkQuantity(long requestQuantity, long productQuantity) {
+
+        if(productQuantity == 0) {
+            throw new CustomException("상품 재고가 부족합니다.");
+        }
+
+        if(requestQuantity > productQuantity) {
+            throw new CustomException("요청수량보다 상품 재고가 부족합니다.");
+        }
+    }
+
 }

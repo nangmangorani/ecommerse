@@ -3,6 +3,7 @@ package kr.hhplus.be.server.service;
 import kr.hhplus.be.TransactionType;
 import kr.hhplus.be.server.domain.PointHist;
 import kr.hhplus.be.server.domain.User;
+import kr.hhplus.be.server.dto.order.RequestOrder;
 import kr.hhplus.be.server.dto.point.RequestPointCharge;
 import kr.hhplus.be.server.dto.point.ResponseUserPoint;
 import kr.hhplus.be.server.exception.custom.CustomException;
@@ -30,14 +31,14 @@ public class UserService {
                 .orElseThrow(() -> new CustomException("사용자가 존재하지 않습니다."));
     }
 
-    public User getUserAndCheckBalance(long userId, long requiredPrice, String status) {
+    public User getUserAndCheckBalance(RequestOrder requestOrder) {
 
-        User user = userRepository.findByIdAndStatus(userId, status)
+        String status = "01";
+
+        User user = userRepository.findByIdAndStatus(requestOrder.userId(), status)
                 .orElseThrow(() -> new CustomException("사용자가 존재하지 않습니다."));
 
-        if (user.getPoint() < requiredPrice) {
-            throw new CustomException("잔고 부족");
-        }
+        user.checkPoint(requestOrder.requestPrice(), user.getPoint());
 
         return user;
     }
