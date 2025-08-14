@@ -4,7 +4,7 @@ package kr.hhplus.be.server.dto.product;
 import kr.hhplus.be.server.domain.Product;
 
 public record ResponseProduct(
-        long productId,
+        Long productId,
         String productName,
         int productQuantity,
         int sellQuantity,

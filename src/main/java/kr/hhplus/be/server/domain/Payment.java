@@ -20,20 +20,20 @@ public class Payment {
 
     @Column(name = "PAYMENT_STATUS", length = 20, nullable = false)
     @Enumerated(EnumType.STRING)
-    private PaymentStatus status;  // 결제 상태 01:결제완료 02:결제진행 03:결제취소
+    private PaymentStatus status;
 
     @Column(name = "PAYMENT_PRICE", nullable = false)
-    private long price;      // 결제 금액
+    private long price;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "PAYMENT_TYPE", length = 20, nullable = false)
-    private TransactionType type;    // 결제 수단
+    private TransactionType type;
 
     @Column(name = "PAYMENT_DATE", nullable = false)
     private LocalDateTime paymentDate;
 
     @Column(name = "ORDER_NO")
-    private Long orderNo;   // 주문 번호 (FK)
+    private Long orderNo;
 
     protected Payment() {}
 

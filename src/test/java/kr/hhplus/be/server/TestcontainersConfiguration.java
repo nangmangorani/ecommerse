@@ -27,12 +27,10 @@ class TestcontainersConfiguration {
 		System.setProperty("spring.datasource.username", MYSQL_CONTAINER.getUsername());
 		System.setProperty("spring.datasource.password", MYSQL_CONTAINER.getPassword());
 
-		// ✅ Redis 컨테이너 추가
 		REDIS_CONTAINER = new GenericContainer<>(DockerImageName.parse("redis:7.0-alpine"))
 				.withExposedPorts(6379);
 		REDIS_CONTAINER.start();
 
-		// Redis 연결 정보 설정
 		System.setProperty("spring.data.redis.host", REDIS_CONTAINER.getHost());
 		System.setProperty("spring.data.redis.port", REDIS_CONTAINER.getMappedPort(6379).toString());
 	}
@@ -42,7 +40,6 @@ class TestcontainersConfiguration {
 		if (MYSQL_CONTAINER.isRunning()) {
 			MYSQL_CONTAINER.stop();
 		}
-		// ✅ Redis 컨테이너도 정리
 		if (REDIS_CONTAINER.isRunning()) {
 			REDIS_CONTAINER.stop();
 		}

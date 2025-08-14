@@ -64,8 +64,6 @@ public class ProductTest {
 
     @BeforeEach
     void setUp() {
-//        setupTestData();
-
         productRepository.deleteAll();
 
         cacheService.invalidateTop5Cache();
@@ -183,7 +181,6 @@ public class ProductTest {
 
         long startTime = System.currentTimeMillis();
 
-        // 동시 요청 실행
         for (int i = 0; i < TEST_REQUESTS; i++) {
             executor.submit(() -> {
                 try {
@@ -223,7 +220,7 @@ public class ProductTest {
     private PerformanceResult measureDBPerformance() throws InterruptedException {
         log.info(" 캐시 없이 DB 직접 조회 성능 측정 중...");
 
-        // 캐시 무효화하여 모든 요청이 DB로 가도록 함
+        // 캐시 무효화 -> 모든 요청 DB로
         cacheService.invalidateTop5Cache();
 
         ExecutorService executor = Executors.newFixedThreadPool(10);
@@ -232,7 +229,6 @@ public class ProductTest {
         AtomicLong totalResponseTime = new AtomicLong(0);
         AtomicInteger successCount = new AtomicInteger(0);
 
-        // 워밍업
         for (int i = 0; i < WARM_UP_REQUESTS; i++) {
             cacheService.invalidateTop5Cache();
             productService.getProductListTop5();
@@ -243,7 +239,7 @@ public class ProductTest {
         for (int i = 0; i < TEST_REQUESTS; i++) {
             executor.submit(() -> {
                 try {
-                    cacheService.invalidateTop5Cache(); // 매번 캐시 무효화
+                    cacheService.invalidateTop5Cache();
                     long requestStart = System.currentTimeMillis();
                     List<ResponseProduct> result = productService.getProductListTop5();
                     long requestTime = System.currentTimeMillis() - requestStart;
@@ -273,7 +269,6 @@ public class ProductTest {
     private PerformanceResult measureCachePerformance() throws InterruptedException {
         log.info(" 캐시 적용 성능 측정 중...");
 
-        // 첫 번째 요청으로 캐시 생성
         productService.getProductListTop5();
 
         ExecutorService executor = Executors.newFixedThreadPool(10);

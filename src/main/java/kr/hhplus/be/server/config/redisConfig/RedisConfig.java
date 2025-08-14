@@ -33,7 +33,6 @@ public class RedisConfig {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory());
 
-        // JSON 직렬화 설정
         Jackson2JsonRedisSerializer<Object> serializer =
                 new Jackson2JsonRedisSerializer<>(Object.class);
 

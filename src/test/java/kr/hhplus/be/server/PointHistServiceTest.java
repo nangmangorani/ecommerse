@@ -5,6 +5,7 @@ import kr.hhplus.be.server.domain.PointHist;
 import kr.hhplus.be.server.domain.User;
 import kr.hhplus.be.server.dto.point.RequestPointCharge;
 import kr.hhplus.be.server.dto.point.ResponseUserPoint;
+import kr.hhplus.be.server.enums.UserStatus;
 import kr.hhplus.be.server.repository.PointHistRepository;
 import kr.hhplus.be.server.repository.UserRepository;
 import kr.hhplus.be.server.service.PointHistService;
@@ -108,7 +109,7 @@ public class PointHistServiceTest {
     @DisplayName("충전하려는 포인트가 양수가 아닐 경우")
     void 충전하려는_포인트가_양수가_아닐_경우() {
 
-        Optional<User> user = Optional.of(new User(1, "이승준", "Y", 1000L));
+        Optional<User> user = Optional.of(new User(1, "이승준", UserStatus.ACTIVE, 1000L));
         RequestPointCharge requestPointCharge = new RequestPointCharge(1, -1L);
 
         // given
@@ -138,7 +139,7 @@ public class PointHistServiceTest {
     @DisplayName("포인트 충전 후 이력이 올바르게 쌓인 경우")
     void 포인트_충전후_이력이_올바르게_쌓인_경우() {
 
-        Optional<User> user = Optional.of(new User(1, "이승준", "Y", 1000L));
+        Optional<User> user = Optional.of(new User(1, "이승준", UserStatus.ACTIVE, 1000L));
         RequestPointCharge requestPointCharge = new RequestPointCharge(1, 100L);
         PointHist pointHist = new PointHist(TransactionType.CHARGE, 100L, 1000L,1);
 

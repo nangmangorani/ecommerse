@@ -158,14 +158,13 @@ public class OrderTest {
     @DisplayName("대용량 동시 주문 처리")
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void massiveConcurrentOrders() throws InterruptedException {
-        // 충분한 재고와 포인트 설정
         product = new Product("대용량상품", ProductStatus.ACTIVE, 1000, 1000, 100000L, "테스트");
         product = productRepository.save(product);
 
         user = new User("테스트유저1", UserStatus.ACTIVE, 20000000L);
         user = userRepository.save(user);
 
-        int threadCount = 100; // 100개 스레드
+        int threadCount = 100;
         ExecutorService executorService = Executors.newFixedThreadPool(50);
         CountDownLatch latch = new CountDownLatch(threadCount);
 
@@ -229,7 +228,7 @@ public class OrderTest {
         user = new User("테스트유저1", UserStatus.ACTIVE, 50000000L);
         user = userRepository.save(user);
 
-        int threadCount = 50; // 상품 50개 요청
+        int threadCount = 50;
         ExecutorService executorService = Executors.newFixedThreadPool(25);
         CountDownLatch latch = new CountDownLatch(threadCount);
 

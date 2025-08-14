@@ -32,7 +32,7 @@ Product {
     @Column(name = "PRICE", nullable = false)
     private long price;
 
-    @Column(name = "PRODUCT_TYPE", length = 5)
+    @Column(name = "PRODUCT_TYPE", length = 20)
     private String type;
 
     protected Product() {}

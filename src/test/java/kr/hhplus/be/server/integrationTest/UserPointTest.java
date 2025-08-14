@@ -19,7 +19,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.utility.TestcontainersConfiguration;
 
-import static org.assertj.core.api.Assertions.assertThat; // AssertJ 사용
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -106,7 +105,7 @@ public class UserPointTest {
         String requestBodyJson = objectMapper.writeValueAsString(request);
 
         mockMvc.perform(post("/point/charge")
-                        .contentType(MediaType.APPLICATION_JSON)  // Content-Type 추가
+                        .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBodyJson))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value(testUser.getId()))

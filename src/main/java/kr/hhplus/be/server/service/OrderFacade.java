@@ -46,8 +46,8 @@ public class OrderFacade {
         String lockKey = "product:stock:" + request.productId();
         RLock lock = redissonClient.getLock(lockKey);
 
-        int maxRetry = 5; // 재시도 횟수
-        int retryDelay = 50; // 재시도 간격 (ms)
+        int maxRetry = 5;
+        int retryDelay = 50;
 
         try {
             boolean locked = false;
@@ -62,10 +62,8 @@ public class OrderFacade {
             if (!locked) {
                 throw new CustomException("재고 처리 중입니다. 잠시 후 다시 시도해주세요.");
             }
-            // 락 획득 후 트랜젝션 시작
             Order order = createOrderCore(request);
 
-            // 4. 이벤트 발행
             orderEventPublisher.publishOrderCreated(OrderCreatedEvent.of(order));
 
             return ResponseOrder.from(order);
@@ -74,7 +72,6 @@ public class OrderFacade {
             Thread.currentThread().interrupt();
             throw new CustomException("주문 처리 중 오류가 발생했습니다.");
         } finally {
-            // 5. 락 해제
             if (lock.isHeldByCurrentThread()) {
                 lock.unlock();
             }

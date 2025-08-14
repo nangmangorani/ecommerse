@@ -36,17 +36,17 @@ public class Order {
     @Column(name = "SOLD_DATETIME")
     private LocalDateTime soldDateTime;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "USER_ID", nullable = false
             ,foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private User user;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "PRODUCT_ID", nullable = false
             ,foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Product product;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "COUPON_ID", nullable = true
             ,foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Coupon coupon;
