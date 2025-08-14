@@ -61,7 +61,6 @@ public class ProductService {
         long startTime = System.currentTimeMillis();
 
         try{
-            // 1. 캐시에서 먼저 조회
             List<ResponseProduct> cachedProducts = cacheService.getTop5Products();
 
             if (cachedProducts != null && !cachedProducts.isEmpty()) {
@@ -71,13 +70,11 @@ public class ProductService {
                 return cachedProducts;
             }
 
-            // 2. 캐시 미스 시 DB 조회
             cacheService.recordCacheMiss();
             log.info("TOP5 상품 캐시 미스 - DB 조회 시작");
 
             List<ResponseProduct> products = getTop5ProductsFromDB();
 
-            // 3. 캐시에 저장
             cacheService.setTop5Products(products);
 
             long duration = System.currentTimeMillis() - startTime;
@@ -87,7 +84,6 @@ public class ProductService {
         } catch(Exception e) {
             long duration = System.currentTimeMillis() - startTime;
             log.error("TOP5 상품 조회 중 오류 발생, 응답시간: {}ms", duration, e);
-            // 오류 시 DB 직접 조회
             return getTop5ProductsFromDB();
         }
     }

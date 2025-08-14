@@ -21,5 +21,4 @@ public record ResponseProduct(
                 product.getType()
         );
     }
-
 }
