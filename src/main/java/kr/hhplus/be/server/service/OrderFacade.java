@@ -14,9 +14,13 @@ import kr.hhplus.be.server.repository.CouponRepository;
 import kr.hhplus.be.server.repository.OrderRepository;
 import kr.hhplus.be.server.repository.ProductRepository;
 import kr.hhplus.be.server.repository.UserRepository;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class OrderFacade {
@@ -26,33 +30,65 @@ public class OrderFacade {
     private final UserService userService;
     private final CouponService couponService;
     private final ProductService productService;
+    private final RedissonClient redissonClient;
 
 
-    public OrderFacade(OrderRepository orderRepository, OrderEventPublisher orderEventPublisher, UserService userService, CouponService couponService, ProductService productService) {
+    public OrderFacade(OrderRepository orderRepository, OrderEventPublisher orderEventPublisher, UserService userService, CouponService couponService, ProductService productService, RedissonClient redissonClient) {
         this.orderRepository = orderRepository;
         this.orderEventPublisher = orderEventPublisher;
         this.userService = userService;
         this.couponService = couponService;
         this.productService = productService;
+        this.redissonClient = redissonClient;
     }
 
-    @Transactional(timeout = 30)
     public ResponseOrder processOrder(RequestOrder request) {
+        String lockKey = "product:stock:" + request.productId();
+        RLock lock = redissonClient.getLock(lockKey);
 
-        Order order = createOrderCore(request);
+        int maxRetry = 5; // 재시도 횟수
+        int retryDelay = 50; // 재시도 간격 (ms)
 
-        orderEventPublisher.publishOrderCreated(OrderCreatedEvent.of(order));
+        try {
+            boolean locked = false;
+            for (int i = 0; i < maxRetry; i++) {
+                if (lock.tryLock(5, 5, TimeUnit.SECONDS)) {
+                    locked = true;
+                    break;
+                }
+                Thread.sleep(retryDelay);
+            }
 
-        return ResponseOrder.from(order);
+            if (!locked) {
+                throw new CustomException("재고 처리 중입니다. 잠시 후 다시 시도해주세요.");
+            }
+            // 락 획득 후 트랜젝션 시작
+            Order order = createOrderCore(request);
+
+            // 4. 이벤트 발행
+            orderEventPublisher.publishOrderCreated(OrderCreatedEvent.of(order));
+
+            return ResponseOrder.from(order);
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new CustomException("주문 처리 중 오류가 발생했습니다.");
+        } finally {
+            // 5. 락 해제
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+        }
     }
 
+    @Transactional(timeout = 10)
     private Order createOrderCore(RequestOrder request) {
 
         User user = userService.getUserAndCheckBalance(request);
 
         Product product = productService.getProductInfo(request);
 
-        productService.decreaseStockWithLock(request.productId(), request.requestQuantity());
+        productService.decreaseStock(request.productId(), request.requestQuantity());
 
         Coupon coupon = null;
 

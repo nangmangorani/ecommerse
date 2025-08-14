@@ -58,10 +58,10 @@ public class ProductService {
 
     public Product getProductInfo(RequestOrder requestOrder) {
 
-        Product product = productRepository.findByIdAndStatusWithLock(requestOrder.productId(), ProductStatus.ACTIVE)
+        Product product = productRepository.findByIdAndStatus(requestOrder.productId(), ProductStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException("상품이 존재하지 않음"));
 
-        product.checkPrice(requestOrder.originalPrice(), product.getPrice());
+        product.checkPrice(requestOrder.originalPrice(), product.getPrice() * requestOrder.requestQuantity());
 
         product.checkQuantity(requestOrder.requestQuantity(), product.getQuantity());
 
@@ -69,12 +69,10 @@ public class ProductService {
     }
 
     @Transactional
-    public void decreaseStockWithLock(Long productId, int quantity) {
-        // 1. 비관적 락으로 상품 조회
-        Product product = productRepository.findByIdAndStatusWithLock(productId, ProductStatus.ACTIVE)
+    public void decreaseStock(Long productId, int quantity) {
+        Product product = productRepository.findByIdAndStatus(productId, ProductStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException("상품을 찾을 수 없습니다"));
 
-        // 2. 도메인 메소드로 재고 차감
         product.decreaseStock(quantity);
 
     }
@@ -82,11 +80,9 @@ public class ProductService {
     // 재고 증가 (롤백용)
     @Transactional
     public void increaseStock(Long productId, int quantity) {
-        // 1. 비관적 락으로 상품 조회 (동시성 제어)
-        Product product = productRepository.findByIdWithLock(productId)
+        Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new CustomException("상품을 찾을 수 없습니다"));
 
-        // 2. 도메인 메소드로 재고 증가
         product.increaseStock(quantity);
 
     }

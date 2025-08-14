@@ -18,12 +18,10 @@ import java.util.Optional;
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
     List<Product> findByStatus(ProductStatus productStatus);
-    List<Product> findTop5ByOrderBySellQuantityDesc();
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query(value = "SELECT p FROM Product p WHERE p.id = :productId AND p.status = :status")
-    Optional<Product> findByIdAndStatusWithLock(@Param("productId") Long productId, ProductStatus status);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT p FROM Product p WHERE p.id = :productId")
-    Optional<Product> findByIdWithLock(@Param("productId") Long productId);
+    List<Product> findTop5ByOrderBySellQuantityDesc();
+
+    @Query(value = "SELECT p FROM Product p WHERE p.id = :productId AND p.status = :status")
+    Optional<Product> findByIdAndStatus(@Param("productId") Long productId, ProductStatus status);
+
 }
