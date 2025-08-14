@@ -2,8 +2,10 @@ package kr.hhplus.be.server.service;
 
 import kr.hhplus.be.server.domain.Coupon;
 import kr.hhplus.be.server.domain.CouponHist;
+import kr.hhplus.be.server.domain.Product;
 import kr.hhplus.be.server.dto.coupon.RequestUserCoupon;
 import kr.hhplus.be.server.dto.coupon.ResponseUserCoupon;
+import kr.hhplus.be.server.enums.CouponStatus;
 import kr.hhplus.be.server.exception.custom.CustomException;
 import kr.hhplus.be.server.repository.CouponRepository;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -66,11 +68,22 @@ public class CouponService {
                 .orElseThrow(() -> new CustomException("쿠폰없음"));
     }
 
-    public Coupon searchCouponByProductId(Long couponId) {
-        String status = "01";
-
-        return couponRepository.findCouponByProductIdAndStatus(couponId, status)
+    public Coupon searchCouponByProductId(Long productId) {
+        return couponRepository.findCouponByProductIdAndStatus(productId, CouponStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException("상품에 부합한 쿠폰이 없음"));
+    }
+
+    public long calculateDiscountedPrice(Product product, Coupon coupon) {
+
+        long expectedDiscountPrice;
+
+        if (coupon != null) {
+            expectedDiscountPrice = product.getPrice() - (product.getPrice() * coupon.getDiscountPercent() / 100);
+        } else {
+            expectedDiscountPrice = product.getPrice();
+        }
+
+        return expectedDiscountPrice;
     }
 
 

@@ -51,6 +51,13 @@ spring:
         format_sql: false
         use_sql_comments: false
 
+# Redisson 설정 (분산 락 사용 시)
+redisson:
+  address: redis://localhost:6379
+  password: # 비밀번호가 있다면
+  connection-pool-size: 10
+  connection-minimum-idle-size: 5
+
 # 테스트 전용 로그 설정
 #logging:
 #  level:

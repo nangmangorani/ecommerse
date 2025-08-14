@@ -1,12 +1,15 @@
 package kr.hhplus.be.server.domain;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.enums.UserStatus;
 import kr.hhplus.be.server.exception.custom.CustomException;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "USERS")
+@Getter
 public class User {
 
     @Id
@@ -17,8 +20,9 @@ public class User {
     @Column(name = "USER_NAME", length = 10, nullable = false)
     private String name;
 
-    @Column(name = "USER_STATUS", length = 2, nullable = false)
-    private String status;
+    @Column(name = "USER_STATUS", length = 20, nullable = false)
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
 
     @Column(name = "USER_POINT", nullable = false)
     private Long point;
@@ -28,7 +32,7 @@ public class User {
 
     protected User() { }
 
-    public User(long id, String name, String status, Long point) {
+    public User(long id, String name, UserStatus status, Long point) {
         this.id = id;
         this.name = name;
         this.status = status;
@@ -36,7 +40,7 @@ public class User {
         this.registeredAt = LocalDateTime.now();
     }
 
-    public User(String name, String status, Long point) {
+    public User(String name, UserStatus status, Long point) {
         this.name = name;
         this.status = status;
         this.point = point;
@@ -61,8 +65,9 @@ public class User {
         this.point -= amount;
     }
 
-    public Long getId() { return id; }
-    public String getName() { return name; }
-    public Long getPoint() { return point; }
-
+    public void checkPoint(long requestAmount, long userAmount) {
+        if(userAmount < requestAmount) {
+            throw new CustomException("잔고 부족");
+        }
+    }
 }

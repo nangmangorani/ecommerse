@@ -1,12 +1,11 @@
 package kr.hhplus.be.server.service;
 
 import jakarta.transaction.Transactional;
-import kr.hhplus.be.TransactionType;
+import kr.hhplus.be.server.enums.PaymentStatus;
+import kr.hhplus.be.server.enums.TransactionType;
 import kr.hhplus.be.server.dto.order.RequestOrder;
 import kr.hhplus.be.server.dto.point.RequestPointCharge;
 import kr.hhplus.be.server.repository.PaymentRepository;
-import kr.hhplus.be.server.repository.PointHistRepository;
-import kr.hhplus.be.server.repository.ProductRepository;
 import kr.hhplus.be.server.domain.*;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +31,7 @@ public class PaymentService {
 
         // 결제이력 추가
         Payment payment = new Payment(
-            "01",
+            PaymentStatus.COMPLETED,
                 requestOrder.requestPrice(),
                 TransactionType.USE,
                 order.getId()
@@ -49,17 +48,11 @@ public class PaymentService {
 
     @Transactional
     public Payment processPayment(long orderId, long amount) {
-        String status = "";
-
         try {
-            status = "01";
-            Payment payment = Payment.create(status, amount, TransactionType.USE, orderId);
+            Payment payment = Payment.create(PaymentStatus.COMPLETED, amount, TransactionType.USE, orderId);
             return paymentRepository.save(payment);
-
-
         } catch (Exception e) {
-            status = "03";
-            Payment failedPayment = Payment.create(status, amount, TransactionType.USE, orderId);
+            Payment failedPayment = Payment.create(PaymentStatus.CANCELLED, amount, TransactionType.USE, orderId);
             return paymentRepository.save(failedPayment);
         }
     }
@@ -72,7 +65,7 @@ public class PaymentService {
 
         // 결제이력 추가
         Payment payment = new Payment(
-                "01",
+                PaymentStatus.COMPLETED,
                 requestPointCharge.userPoint(),
                 TransactionType.CHARGE
         );

@@ -3,6 +3,7 @@ package kr.hhplus.be.server.service;
 import kr.hhplus.be.server.domain.Coupon;
 import kr.hhplus.be.server.domain.CouponHist;
 import kr.hhplus.be.server.dto.coupon.RequestUserCoupon;
+import kr.hhplus.be.server.enums.CouponHistStatus;
 import kr.hhplus.be.server.repository.CouponHistRepository;
 import org.springframework.stereotype.Service;
 
@@ -36,7 +37,7 @@ public class CouponHistService {
                 requestUserCoupon.couponId(),
                 requestUserCoupon.userId(),
                 requestUserCoupon.productId(),
-                "01"
+                CouponHistStatus.ISSUED
         );
 
         return couponHistRepository.save(couponHist);

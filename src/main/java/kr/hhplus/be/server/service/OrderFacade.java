@@ -6,6 +6,7 @@ import kr.hhplus.be.server.domain.Product;
 import kr.hhplus.be.server.domain.User;
 import kr.hhplus.be.server.dto.order.RequestOrder;
 import kr.hhplus.be.server.dto.order.ResponseOrder;
+import kr.hhplus.be.server.enums.OrderStatus;
 import kr.hhplus.be.server.eventHandler.OrderCreatedEvent;
 import kr.hhplus.be.server.eventHandler.OrderEventPublisher;
 import kr.hhplus.be.server.exception.custom.CustomException;
@@ -13,9 +14,13 @@ import kr.hhplus.be.server.repository.CouponRepository;
 import kr.hhplus.be.server.repository.OrderRepository;
 import kr.hhplus.be.server.repository.ProductRepository;
 import kr.hhplus.be.server.repository.UserRepository;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class OrderFacade {
@@ -25,47 +30,62 @@ public class OrderFacade {
     private final UserService userService;
     private final CouponService couponService;
     private final ProductService productService;
-    private final ProductRepository productRepository;
+    private final RedissonClient redissonClient;
 
 
-    public OrderFacade(OrderRepository orderRepository, UserRepository userRepository, ProductRepository productRepository, OrderEventPublisher orderEventPublisher, CouponRepository couponRepository, UserService userService, CouponService couponService, ProductService productService) {
+    public OrderFacade(OrderRepository orderRepository, OrderEventPublisher orderEventPublisher, UserService userService, CouponService couponService, ProductService productService, RedissonClient redissonClient) {
         this.orderRepository = orderRepository;
         this.orderEventPublisher = orderEventPublisher;
         this.userService = userService;
         this.couponService = couponService;
         this.productService = productService;
-        this.productRepository = productRepository;
+        this.redissonClient = redissonClient;
     }
 
-    @Transactional(timeout = 30)
     public ResponseOrder processOrder(RequestOrder request) {
+        String lockKey = "product:stock:" + request.productId();
+        RLock lock = redissonClient.getLock(lockKey);
 
-        // 1. 핵심 주문 생성만 트랜잭션으로 처리
-        Order order = createOrderCore(request);
+        int maxRetry = 5;
+        int retryDelay = 50;
 
-        System.out.println("비동기처리전!@!@@");
+        try {
+            boolean locked = false;
+            for (int i = 0; i < maxRetry; i++) {
+                if (lock.tryLock(5, 5, TimeUnit.SECONDS)) {
+                    locked = true;
+                    break;
+                }
+                Thread.sleep(retryDelay);
+            }
 
-        // 2. 비동기 후속 처리 이벤트 발행
-        orderEventPublisher.publishOrderCreated(OrderCreatedEvent.of(order));
+            if (!locked) {
+                throw new CustomException("재고 처리 중입니다. 잠시 후 다시 시도해주세요.");
+            }
+            Order order = createOrderCore(request);
 
-        return ResponseOrder.from(order);
+            orderEventPublisher.publishOrderCreated(OrderCreatedEvent.of(order));
+
+            return ResponseOrder.from(order);
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new CustomException("주문 처리 중 오류가 발생했습니다.");
+        } finally {
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+        }
     }
 
+    @Transactional(timeout = 10)
     private Order createOrderCore(RequestOrder request) {
 
-        String status = "01";
+        User user = userService.getUserAndCheckBalance(request);
 
-        User user = userService.getUserAndCheckBalance(request.userId(), request.requestPrice(), status);
+        Product product = productService.getProductInfo(request);
 
-        productService.decreaseStockWithLock(request.productId(), request.requestQuantity());
-
-        Product product = productRepository.findById(request.productId())
-                .orElseThrow(() -> new CustomException("상품이 존재하지 않습니다."));
-
-        // 요청한 상품원금과 실제 상품 가격 검증
-        if (request.originalPrice() != product.getPrice()) {
-            throw new CustomException("상품 가격이 일치하지 않습니다.");
-        }
+        productService.decreaseStock(request.productId(), request.requestQuantity());
 
         Coupon coupon = null;
 
@@ -73,20 +93,9 @@ public class OrderFacade {
             coupon = couponService.searchCouponByProductId(request.productId());
         }
 
-        // 쿠폰 할인금액과 사용자 요청금액 검증
-        long expectedDiscountPrice;
+        long expectedDiscountPrice = couponService.calculateDiscountedPrice(product, coupon);
 
-        if (coupon != null) {
-            expectedDiscountPrice = product.getPrice() - (product.getPrice() * coupon.getDiscountPercent() / 100);
-        } else {
-            expectedDiscountPrice = product.getPrice();
-        }
-
-        if (user.getPoint() < request.requestPrice()) {
-            throw new CustomException("잔고부족");
-        }
-
-        Order order = Order.create(user, product, coupon, request.requestPrice(), request.requestQuantity());
+        Order order = Order.create(user, product, coupon, expectedDiscountPrice, request.requestQuantity(), OrderStatus.IN_PROGRESS);
 
         return orderRepository.save(order);
     }

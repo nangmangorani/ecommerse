@@ -1,7 +1,7 @@
 package kr.hhplus.be.server.domain;
 
 import jakarta.persistence.*;
-import kr.hhplus.be.TransactionType;
+import kr.hhplus.be.server.enums.TransactionType;
 import lombok.Getter;
 
 import java.time.LocalDateTime;

@@ -1,22 +1,32 @@
 package kr.hhplus.be.server.service;
 
 import kr.hhplus.be.server.domain.Product;
+import kr.hhplus.be.server.dto.order.RequestOrder;
 import kr.hhplus.be.server.dto.product.ResponseProduct;
+import kr.hhplus.be.server.enums.ProductStatus;
 import kr.hhplus.be.server.exception.custom.CustomException;
 import kr.hhplus.be.server.repository.ProductRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Service
+@Slf4j
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final ProductCacheService cacheService;
 
-    public ProductService(ProductRepository productRepository) {
+    public ProductService(ProductRepository productRepository, RedisTemplate<String, Object> redisTemplate, ProductCacheService cacheService) {
         this.productRepository = productRepository;
+        this.redisTemplate = redisTemplate;
+        this.cacheService = cacheService;
     }
 
     /**
@@ -25,23 +35,8 @@ public class ProductService {
      */
     public List<ResponseProduct> getProductList() {
 
-        String status = "01";
+        List<Product> products = productRepository.findByStatus(ProductStatus.ACTIVE);
 
-        List<Product> products = productRepository.findByStatus(status);
-
-        return products.stream()
-                .map(ResponseProduct::from)
-                .toList();
-    }
-
-    /**
-     * 판매상품 상위 5개 조회
-     * @return List<ResponseProductList>
-     */
-    public List<ResponseProduct> getProductListTop5() {
-
-        List<Product> products = Optional.ofNullable(productRepository.findTop5ByOrderBySellQuantityDesc())
-                .orElseGet(List::of);
         return products.stream()
                 .map(ResponseProduct::from)
                 .toList();
@@ -56,49 +51,86 @@ public class ProductService {
                 .orElseThrow(() -> new CustomException("상품이 존재하지 않음"));
     }
 
-    public Product getProductInfo(long productId, long requestQuantity) {
+    /**
+     * 판매상품 상위 5개 조회
+     * Cache-Aside 패턴 사용
+     * @return List<ResponseProductList>
+     */
+    public List<ResponseProduct> getProductListTop5() {
 
-        Product product = productRepository.findByIdAndStatusWithLock(productId, "01")
+        long startTime = System.currentTimeMillis();
+
+        try{
+            List<ResponseProduct> cachedProducts = cacheService.getTop5Products();
+
+            if (cachedProducts != null && !cachedProducts.isEmpty()) {
+                cacheService.recordCacheHit();
+                long duration = System.currentTimeMillis() - startTime;
+                log.info("TOP5 상품 조회 완료 (캐시 히트), 응답시간: {}ms", duration);
+                return cachedProducts;
+            }
+
+            cacheService.recordCacheMiss();
+            log.info("TOP5 상품 캐시 미스 - DB 조회 시작");
+
+            List<ResponseProduct> products = getTop5ProductsFromDB();
+
+            cacheService.setTop5Products(products);
+
+            long duration = System.currentTimeMillis() - startTime;
+            log.info("TOP5 상품 조회 완료 (DB), 응답시간: {}ms", duration);
+
+            return products;
+        } catch(Exception e) {
+            long duration = System.currentTimeMillis() - startTime;
+            log.error("TOP5 상품 조회 중 오류 발생, 응답시간: {}ms", duration, e);
+            return getTop5ProductsFromDB();
+        }
+    }
+
+
+    public Product getProductInfo(RequestOrder requestOrder) {
+
+        Product product = productRepository.findByIdAndStatus(requestOrder.productId(), ProductStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException("상품이 존재하지 않음"));
 
-        if (product.getQuantity() <= 0) {
-            throw new CustomException("상품 재고 부족");
-        }
-        if(requestQuantity > product.getQuantity()) {
-            throw new CustomException("요청수량보다 재고 부족");
-        }
+        product.checkPrice(requestOrder.originalPrice(), product.getPrice() * requestOrder.requestQuantity());
 
+        product.checkQuantity(requestOrder.requestQuantity(), product.getQuantity());
 
         return product;
     }
 
     @Transactional
-    public void decreaseStockWithLock(Long productId, int quantity) {
-        System.out.println("=== 재고차감 시도: 스레드=" + Thread.currentThread().getName() + ", 상품ID=" + productId + ", 수량=" + quantity);
-
-        String status = "01";
-
-        // 1. 비관적 락으로 상품 조회
-        Product product = productRepository.findByIdAndStatusWithLock(productId, status)
+    public void decreaseStock(Long productId, int quantity) {
+        Product product = productRepository.findByIdAndStatus(productId, ProductStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException("상품을 찾을 수 없습니다"));
-        System.out.println("=== 현재 재고: " + product.getQuantity() + ", 요청 수량: " + quantity);
 
-        // 2. 도메인 메소드로 재고 차감
         product.decreaseStock(quantity);
-
-        System.out.println("=== 재고차감 완료: 남은 재고=" + product.getQuantity());
-
     }
 
     // 재고 증가 (롤백용)
     @Transactional
     public void increaseStock(Long productId, int quantity) {
-        // 1. 비관적 락으로 상품 조회 (동시성 제어)
-        Product product = productRepository.findByIdWithLock(productId)
+        Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new CustomException("상품을 찾을 수 없습니다"));
 
-        // 2. 도메인 메소드로 재고 증가
         product.increaseStock(quantity);
+    }
 
+    private ResponseProduct getProductFromDB(Long productId) {
+        return productRepository.findById(productId)
+                .map(ResponseProduct::from)
+                .orElse(null);
+    }
+
+    private List<ResponseProduct> getTop5ProductsFromDB() {
+        List<Product> products = Optional.ofNullable(
+                productRepository.findTop5ByOrderBySellQuantityDesc()
+        ).orElseGet(List::of);
+
+        return products.stream()
+                .map(ResponseProduct::from)
+                .toList();
     }
 }

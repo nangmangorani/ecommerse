@@ -3,6 +3,8 @@ package kr.hhplus.be.server;
 import kr.hhplus.be.server.domain.Product;
 import kr.hhplus.be.server.domain.User;
 import kr.hhplus.be.server.dto.order.RequestOrder;
+import kr.hhplus.be.server.enums.ProductStatus;
+import kr.hhplus.be.server.enums.UserStatus;
 import kr.hhplus.be.server.repository.OrderRepository;
 import kr.hhplus.be.server.repository.PointHistRepository;
 import kr.hhplus.be.server.repository.ProductRepository;
@@ -39,7 +41,6 @@ public class OrderServiceTest {
 
     @BeforeEach
     void setUp() {
-        // @Mock, @InjectMocks 어노테이션 필드 초기화
         MockitoAnnotations.openMocks(this);
     }
 
@@ -73,7 +74,7 @@ public class OrderServiceTest {
 
         RequestOrder requestOrder = new RequestOrder(1L, 1L, 1L, 1,1000L, 100, true);
 
-        User user = new User(1,"이승준", "Y", 1000L);
+        User user = new User(1,"이승준", UserStatus.ACTIVE, 1000L);
 
         // given
         given(userRepository.findById(requestOrder.userId())).willReturn(Optional.of(user));
@@ -90,8 +91,8 @@ public class OrderServiceTest {
     void 주문시_상품재고가_부족할때() {
 
         RequestOrder requestOrder = new RequestOrder(1L, 1L, 1L, 1,1000L, 100, true);
-        User user = new User(1,"이승준", "Y", 1000L);
-        Product product = new Product(1,"상품1","Y",0,10,1000L,"필기구");
+        User user = new User(1,"이승준", UserStatus.ACTIVE, 1000L);
+        Product product = new Product(1,"상품1", ProductStatus.ACTIVE,0,10,1000L,"필기구");
 
         // given
         given(userRepository.findById(requestOrder.userId())).willReturn(Optional.of(user));
@@ -108,8 +109,8 @@ public class OrderServiceTest {
     void 주문시_잔고가_부족할때() {
 
         RequestOrder requestOrder = new RequestOrder(1L, 1L, 1L, 1,11000L, 10000, true);
-        User user = new User(1,"이승준", "Y", 1000L);
-        Product product = new Product(1,"상품1","Y",1,10,1000L,"필기구");
+        User user = new User(1,"이승준", UserStatus.ACTIVE, 1000L);
+        Product product = new Product(1,"상품1",ProductStatus.ACTIVE,1,10,1000L,"필기구");
 
         // given
         given(userRepository.findById(requestOrder.userId())).willReturn(Optional.of(user));

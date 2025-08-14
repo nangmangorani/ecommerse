@@ -54,6 +54,9 @@ dependencies {
 	testImplementation("org.projectlombok:lombok") // 테스트 코드에서 Lombok 사용 시
 	testAnnotationProcessor("org.projectlombok:lombok") // 테스트 애너테이션 프로세서
 
+	// redis
+	implementation("org.springframework.boot:spring-boot-starter-data-redis")
+	implementation("org.redisson:redisson-spring-boot-starter:3.23.4")
 }
 
 tasks.withType<Test> {

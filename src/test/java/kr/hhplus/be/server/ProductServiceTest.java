@@ -3,6 +3,7 @@ package kr.hhplus.be.server;
 
 import kr.hhplus.be.server.domain.Product;
 import kr.hhplus.be.server.dto.product.ResponseProduct;
+import kr.hhplus.be.server.enums.ProductStatus;
 import kr.hhplus.be.server.repository.ProductRepository;
 import kr.hhplus.be.server.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,7 +31,6 @@ public class ProductServiceTest {
 
     @BeforeEach
     void setUp() {
-        // @Mock, @InjectMocks 어노테이션 필드 초기화
         MockitoAnnotations.openMocks(this);
 
     }
@@ -60,9 +60,9 @@ public class ProductServiceTest {
     void 상품_목록_정상적으로_조회() {
 
         List<Product> products = Arrays.asList(
-                new Product(1, "상품1", "Y", 10, 1, 1000L, "침구류"),
-                new Product(2, "상품2", "Y", 20, 1, 2000L, "침구류"),
-                new Product(3, "상품3", "Y", 13, 3, 2100L, "침구류")
+                new Product(1, "상품1", ProductStatus.ACTIVE, 10, 1, 1000L, "침구류"),
+                new Product(2, "상품2", ProductStatus.ACTIVE, 20, 1, 2000L, "침구류"),
+                new Product(3, "상품3", ProductStatus.ACTIVE, 13, 3, 2100L, "침구류")
         );
 
         // given
@@ -103,9 +103,9 @@ public class ProductServiceTest {
     void 상품이_5개_미만일_경우() {
 
         List<Product> products = Arrays.asList(
-                new Product(1, "상품1", "Y", 10, 10, 1000L, "침구류"),
-                new Product(2, "상품2", "Y", 20, 11, 2000L, "문구류"),
-                new Product(3, "상품3", "Y", 13, 12, 2100L, "의류")
+                new Product(1, "상품1", ProductStatus.ACTIVE, 10, 10, 1000L, "침구류"),
+                new Product(2, "상품2", ProductStatus.ACTIVE, 20, 11, 2000L, "문구류"),
+                new Product(3, "상품3", ProductStatus.ACTIVE, 13, 12, 2100L, "의류")
         );
 
         // given
@@ -125,11 +125,11 @@ public class ProductServiceTest {
     @DisplayName("상위 5개 상품 정상적으로 조회")
     void 상위_5개상품_정상적으로_조회() {
         List<Product> products = Arrays.asList(
-                new Product(1, "상품1", "Y", 10, 10, 1000L, "침구류"),
-                new Product(2, "상품2", "Y", 20, 11, 2000L, "문구류"),
-                new Product(3, "상품3", "Y", 13, 12, 2100L, "의류"),
-                new Product(4, "상품4", "Y", 14, 10, 3000L, "침구류"),
-                new Product(5, "상품5", "Y", 15, 11, 1800L, "문구류")
+                new Product(1, "상품1", ProductStatus.ACTIVE, 10, 10, 1000L, "침구류"),
+                new Product(2, "상품2", ProductStatus.ACTIVE, 20, 11, 2000L, "문구류"),
+                new Product(3, "상품3", ProductStatus.ACTIVE, 13, 12, 2100L, "의류"),
+                new Product(4, "상품4", ProductStatus.ACTIVE, 14, 10, 3000L, "침구류"),
+                new Product(5, "상품5", ProductStatus.ACTIVE, 15, 11, 1800L, "문구류")
         );
 
         // given
@@ -173,7 +173,7 @@ public class ProductServiceTest {
         long id = 1;
 
         Product product = new Product(
-                1, "상품1", "Y",10, 9,1000L, "문구류"
+                1, "상품1", ProductStatus.ACTIVE,10, 9,1000L, "문구류"
         );
 
         // given

@@ -1,6 +1,6 @@
 package kr.hhplus.be.server;
 
-import kr.hhplus.be.TransactionType;
+import kr.hhplus.be.server.enums.*;
 import kr.hhplus.be.server.dto.order.RequestOrder;
 import kr.hhplus.be.server.repository.OrderRepository;
 import kr.hhplus.be.server.repository.PaymentRepository;
@@ -41,7 +41,6 @@ public class PaymentServiceTest {
 
     @BeforeEach
     void setUp() {
-        // @Mock, @InjectMocks 어노테이션 필드 초기화
         MockitoAnnotations.openMocks(this);
     }
 
@@ -56,12 +55,12 @@ public class PaymentServiceTest {
     @DisplayName("포인트 차감, 재고 차감, 결제 및 포인트이력 저장이 정상 작동")
     void 결제_정상적으로_처리() {
 
-        User user = new User(1, "이승준", "Y", 5000L);  // 생성자 예시
-        Product product = new Product(1, "상품1", "Y", 2, 10, 1000L, "필기구");  // 생성자 예시
+        User user = new User(1, "이승준", UserStatus.ACTIVE, 5000L);  // 생성자 예시
+        Product product = new Product(1, "상품1", ProductStatus.ACTIVE, 2, 10, 1000L, "필기구");  // 생성자 예시
         PointHist pointHist = new PointHist(TransactionType.USE, 100L, 1000L,1);
-        Payment payment = new Payment("01", 800, TransactionType.USE, 1L);
-        Coupon coupon = new Coupon("쿠폰", "01", 10,10,5,1);
-        Order order = new Order(user, product, coupon, 1000L, 800L,1, "01");
+        Payment payment = new Payment(PaymentStatus.COMPLETED, 800, TransactionType.USE, 1L);
+        Coupon coupon = new Coupon("쿠폰", CouponStatus.ACTIVE, 10,10,5,1);
+        Order order = new Order(user, product, coupon, 1000L, 800L,1, OrderStatus.COMPLETED);
 
         RequestOrder requestOrder = new RequestOrder(
                 user.getId(),

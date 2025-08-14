@@ -3,6 +3,7 @@ package kr.hhplus.be.server.integrationTest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.hhplus.be.server.domain.User;
 import kr.hhplus.be.server.dto.point.RequestPointCharge;
+import kr.hhplus.be.server.enums.UserStatus;
 import kr.hhplus.be.server.repository.UserRepository;
 import kr.hhplus.be.server.service.PointHistService;
 import kr.hhplus.be.server.service.UserService;
@@ -18,7 +19,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.utility.TestcontainersConfiguration;
 
-import static org.assertj.core.api.Assertions.assertThat; // AssertJ 사용
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -53,7 +53,7 @@ public class UserPointTest {
     void setUp() {
         userRepository.deleteAll();
 
-        testUser = new User("테스트유저1", "01", 5000L);
+        testUser = new User("테스트유저1", UserStatus.ACTIVE, 5000L);
         testUser = userRepository.save(testUser);
     }
 
@@ -105,7 +105,7 @@ public class UserPointTest {
         String requestBodyJson = objectMapper.writeValueAsString(request);
 
         mockMvc.perform(post("/point/charge")
-                        .contentType(MediaType.APPLICATION_JSON)  // Content-Type 추가
+                        .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBodyJson))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value(testUser.getId()))

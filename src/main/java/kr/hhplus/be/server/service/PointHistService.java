@@ -1,10 +1,9 @@
 package kr.hhplus.be.server.service;
 
-import kr.hhplus.be.TransactionType;
+import kr.hhplus.be.server.enums.TransactionType;
 import kr.hhplus.be.server.domain.PointHist;
 import kr.hhplus.be.server.domain.User;
 import kr.hhplus.be.server.repository.PointHistRepository;
-import kr.hhplus.be.server.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 @Service

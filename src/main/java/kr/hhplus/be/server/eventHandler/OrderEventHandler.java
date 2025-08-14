@@ -1,8 +1,9 @@
 package kr.hhplus.be.server.eventHandler;
 
 import jakarta.annotation.PreDestroy;
-import kr.hhplus.be.TransactionType;
+import kr.hhplus.be.server.enums.TransactionType;
 import kr.hhplus.be.server.domain.Payment;
+import kr.hhplus.be.server.enums.UserStatus;
 import kr.hhplus.be.server.exception.custom.CustomException;
 import kr.hhplus.be.server.service.*;
 import org.springframework.context.event.EventListener;
@@ -37,65 +38,16 @@ public class OrderEventHandler {
             this.pointHistService = pointHistService;
         }
 
-//        // 1단계: 재고 차감 처리
-//        @EventListener
-//        @Async("orderTaskExecutor")
-//        @Transactional
-//        public void handleProductDecrease(OrderCreatedEvent event) {
-//            try {
-//                // 실제 재고 차감 (동시성 제어 적용)
-//                productService.decreaseStockWithLock(
-//                        event.getProductId(),
-//                        event.getRequestQuantity()
-//                );
-//
-//
-//                // 다음 단계 이벤트 발행
-//                orderEventPublisher.publishProductUpdated(
-//                        ProductUpdatedEvent.of(event)
-//                );
-//
-//            } catch (Exception e) {
-//                // 재고 부족 시 주문 취소
-//                orderService.cancelOrder(event.getOrderId());
-//            }
-//        }
-
-//    @EventListener
-//    public void handleOrderCreated(OrderCreatedEvent event) {
-//        stockDecreaseExecutor.submit(() -> {
-//            try {
-//                System.out.println("### 재고 감소 작업 시작: 주문 ID " + event.getOrderId());
-//
-//                productService.decreaseStockWithLock(
-//                        event.getProductId(),
-//                        event.getRequestQuantity()
-//                );
-//
-//                orderEventPublisher.publishProductUpdated(
-//                        ProductUpdatedEvent.of(event)
-//                );
-//
-//            } catch (Exception e) {
-//                System.err.println("!!! 재고 차감 실패: 주문 ID " + event.getOrderId() + " - " + e.getMessage());
-//                // 재고 부족 시 주문 취소
-//                orderService.cancelOrder(event.getOrderId());
-//            }
-//        });
-//    }
-
     @EventListener
     @Async("orderTaskExecutor")
     @Transactional
     public void handlePointDeduction(OrderCreatedEvent event) {
         try {
-            System.out.println("포인트차감되나요? ");
             // 실제 포인트 차감 (동시성 제어 적용)
             userService.deductPointsWithLock(
                     event.getUserId(),
                     event.getRequestPrice()
             );
-            System.out.println("포인트차감되나요2");
             // 다음 단계 이벤트 발행
             orderEventPublisher.publishPointDeducted(
                     PointDeductedEvent.of(event)
@@ -113,23 +65,21 @@ public class OrderEventHandler {
     @Transactional
     public void handlePayment(PointDeductedEvent event) {
         try {
-            System.out.println("결제처리 1");
 
             Payment result = paymentService.processPayment(
                     event.getOrderId(),
                     event.getRequestPrice()
             );
-            System.out.println("결제처리 2");
 
-            if ("01".equals(result.getStatus())) {
+            if (result.getStatus().isCompleted()) {
                 // 주문 완료 처리
                 orderService.completeOrder(event.getOrderId());
 
                 pointHistService.createPointHist(
-                        userService.getUserInfo(event.getUserId(), "01"),
+                        userService.getUserInfo(event.getUserId(), UserStatus.ACTIVE),
                         TransactionType.USE,
                         event.getRequestPrice(),
-                        userService.getUserInfo(event.getUserId(), "01").getPoint(),
+                        userService.getUserInfo(event.getUserId(), UserStatus.ACTIVE).getPoint(),
                         result.getId()  // 결제 ID
                 );
 
