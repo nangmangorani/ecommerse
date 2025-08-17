@@ -8,20 +8,17 @@ import kr.hhplus.be.server.dto.coupon.ResponseUserCoupon;
 import kr.hhplus.be.server.enums.CouponStatus;
 import kr.hhplus.be.server.exception.custom.CustomException;
 import kr.hhplus.be.server.repository.CouponRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class CouponService {
 
     private final CouponRepository couponRepository;
     private final CouponHistService couponHistService;
-
-    public CouponService(CouponRepository couponRepository, CouponHistService couponHistService) {
-        this.couponRepository = couponRepository;
-        this.couponHistService = couponHistService;
-    }
 
     @Transactional
     public ResponseUserCoupon getCoupon(RequestUserCoupon requestUserCoupon) {

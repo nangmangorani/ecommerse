@@ -14,6 +14,7 @@ import kr.hhplus.be.server.repository.CouponRepository;
 import kr.hhplus.be.server.repository.OrderRepository;
 import kr.hhplus.be.server.repository.ProductRepository;
 import kr.hhplus.be.server.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@RequiredArgsConstructor
 public class OrderFacade {
 
     private final OrderRepository orderRepository;
@@ -31,16 +33,6 @@ public class OrderFacade {
     private final CouponService couponService;
     private final ProductService productService;
     private final RedissonClient redissonClient;
-
-
-    public OrderFacade(OrderRepository orderRepository, OrderEventPublisher orderEventPublisher, UserService userService, CouponService couponService, ProductService productService, RedissonClient redissonClient) {
-        this.orderRepository = orderRepository;
-        this.orderEventPublisher = orderEventPublisher;
-        this.userService = userService;
-        this.couponService = couponService;
-        this.productService = productService;
-        this.redissonClient = redissonClient;
-    }
 
     public ResponseOrder processOrder(RequestOrder request) {
         String lockKey = "product:stock:" + request.productId();

@@ -7,17 +7,14 @@ import kr.hhplus.be.server.dto.order.RequestOrder;
 import kr.hhplus.be.server.dto.point.RequestPointCharge;
 import kr.hhplus.be.server.repository.PaymentRepository;
 import kr.hhplus.be.server.domain.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class PaymentService {
     private final PointHistService pointHistService;
     private final PaymentRepository paymentRepository;
-
-    public PaymentService(PointHistService pointHistService, PaymentRepository paymentRepository) {
-        this.pointHistService = pointHistService;
-        this.paymentRepository = paymentRepository;
-    }
 
     /**
      * 상품결제

@@ -5,19 +5,17 @@ import kr.hhplus.be.server.domain.CouponHist;
 import kr.hhplus.be.server.dto.coupon.RequestUserCoupon;
 import kr.hhplus.be.server.enums.CouponHistStatus;
 import kr.hhplus.be.server.repository.CouponHistRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import javax.swing.text.html.Option;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class CouponHistService {
 
     private final CouponHistRepository couponHistRepository;
-
-    public CouponHistService(CouponHistRepository couponHistRepository) {
-        this.couponHistRepository = couponHistRepository;
-    }
 
     // 사용자 쿠폰이력조회
     public boolean getCouponHist(RequestUserCoupon requestUserCoupon) {

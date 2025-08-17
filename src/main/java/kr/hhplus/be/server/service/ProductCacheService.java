@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.hhplus.be.server.dto.product.ResponseProduct;
 import lombok.Builder;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class ProductCacheService {
 
     private final RedisTemplate<String, Object> redisTemplate;
@@ -34,11 +36,6 @@ public class ProductCacheService {
     private static final Duration TOP5_TTL = Duration.ofHours(1);
     private static final Duration CATEGORY_TTL = Duration.ofMinutes(30);
     private static final Duration PRODUCT_TTL = Duration.ofMinutes(15);
-
-    public ProductCacheService(RedisTemplate<String, Object> redisTemplate, ObjectMapper objectMapper) {
-        this.redisTemplate = redisTemplate;
-        this.objectMapper = objectMapper;
-    }
 
     /**
      * TOP5 상품 캐시 조회

@@ -13,9 +13,11 @@ import kr.hhplus.be.server.repository.OrderRepository;
 import kr.hhplus.be.server.repository.PointHistRepository;
 import kr.hhplus.be.server.repository.ProductRepository;
 import kr.hhplus.be.server.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class OrderService {
 
     private final OrderRepository orderRepository;
@@ -23,14 +25,6 @@ public class OrderService {
     private final UserService userService;
     private final PaymentService paymentService;
     private final CouponService couponService;
-
-    public OrderService(OrderRepository orderRepository, PointHistRepository pointHistRepository, UserRepository userRepository, ProductRepository productRepository, ProductService productService, UserService userService, PaymentService paymentService, CouponService couponService) {
-        this.orderRepository = orderRepository;
-        this.productService = productService;
-        this.userService = userService;
-        this.paymentService = paymentService;
-        this.couponService = couponService;
-    }
 
     /**
      * 상품주문

@@ -6,6 +6,7 @@ import kr.hhplus.be.server.dto.product.ResponseProduct;
 import kr.hhplus.be.server.enums.ProductStatus;
 import kr.hhplus.be.server.exception.custom.CustomException;
 import kr.hhplus.be.server.repository.ProductRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -17,17 +18,12 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class ProductService {
 
     private final ProductRepository productRepository;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ProductCacheService cacheService;
-
-    public ProductService(ProductRepository productRepository, RedisTemplate<String, Object> redisTemplate, ProductCacheService cacheService) {
-        this.productRepository = productRepository;
-        this.redisTemplate = redisTemplate;
-        this.cacheService = cacheService;
-    }
 
     /**
      * 상품리스트 조회
