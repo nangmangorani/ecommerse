@@ -105,7 +105,6 @@ public class ProductService {
         product.decreaseStock(quantity);
     }
 
-    // 재고 증가 (롤백용)
     @Transactional
     public void increaseStock(Long productId, int quantity) {
         Product product = productRepository.findById(productId)
@@ -121,9 +120,11 @@ public class ProductService {
     }
 
     private List<ResponseProduct> getTop5ProductsFromDB() {
-        List<Product> products = Optional.ofNullable(
-                productRepository.findTop5ByOrderBySellQuantityDesc()
-        ).orElseGet(List::of);
+        List<Product> products = productRepository.findTop5ByOrderBySellQuantityDesc();
+
+        if (products == null) {
+            products = List.of();
+        }
 
         return products.stream()
                 .map(ResponseProduct::from)

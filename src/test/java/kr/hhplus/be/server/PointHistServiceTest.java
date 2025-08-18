@@ -43,9 +43,7 @@ public class PointHistServiceTest {
 
     @BeforeEach
     void setUp() {
-        // @Mock, @InjectMocks 어노테이션 필드 초기화
         MockitoAnnotations.openMocks(this);
-
     }
 
     /**
@@ -55,50 +53,6 @@ public class PointHistServiceTest {
      * 3. id값이 음수로 넘어올 경우
      * 4. 포인트의 경계값 (-1, 0 ,1) 체크
      */
-//    @Test
-//    @DisplayName("회원이 존재하지 않는 경우")
-//    void 회원이_존재하지_않는_경우() {
-//
-//        // given
-//        given(userRepository.findById(id)).willReturn(null);
-//
-//        // when, then
-//        assertThatThrownBy(() -> userService.chargePoint(id))
-//                .isInstanceOf(RuntimeException.class);
-//    }
-
-//    @Test
-//    @DisplayName("포인트가 음수일 경우")
-//    void 포인트가_음수일_경우() {
-//
-//        Optional<User> user = Optional.of(new User(1, "이승준", "Y", -1L));
-//
-//        // given
-//        given(userRepository.findById(id)).willReturn(user);
-//
-//        // when, then
-//        assertThatThrownBy(() -> userService.chargePoint(id))
-//                .isInstanceOf(RuntimeException.class);
-//    }
-
-//    @Test
-//    @DisplayName("정상적으로 조회")
-//    void 정상적으로_조회() {
-//
-//        Optional<User> user = Optional.of(new User(1, "이승준", "Y", 1000L));
-//
-//        // given
-//        given(userRepository.findById(id)).willReturn(user);
-//
-//        // when
-//        ResponseUserPoint result = userService.chargePoint(id);
-//
-//        // then
-//        assertThat(result.userId()).isEqualTo(1);
-//        assertThat(result.userName()).isEqualTo("이승준");
-//        assertThat(result.userPoint()).isEqualTo(1000L);
-//
-//    }
 
     /**
      * 포인트 충전 테스트
@@ -112,10 +66,8 @@ public class PointHistServiceTest {
         Optional<User> user = Optional.of(new User(1, "이승준", UserStatus.ACTIVE, 1000L));
         RequestPointCharge requestPointCharge = new RequestPointCharge(1, -1L);
 
-        // given
         given(userRepository.findById(id)).willReturn(user);
 
-        // when, then
         assertThatThrownBy(() -> userService.chargePoint(requestPointCharge))
                 .isInstanceOf(RuntimeException.class);
 
@@ -130,7 +82,6 @@ public class PointHistServiceTest {
 
         given(pointHistRepository.save(pointHist)).willReturn(null);
 
-        // when, then
         assertThatThrownBy(() -> userService.chargePoint(requestPointCharge))
                 .isInstanceOf(RuntimeException.class);
     }
@@ -146,10 +97,8 @@ public class PointHistServiceTest {
         given(userRepository.findById(requestPointCharge.userId())).willReturn(user);
         given(pointHistRepository.save(pointHist)).willReturn(pointHist);
 
-        // when
         ResponseUserPoint result = userService.chargePoint(requestPointCharge);
 
-        // then
         assertThat(result.userId()).isEqualTo(1);
         assertThat(result.userName()).isEqualTo("이승준");
         assertThat(result.userPoint()).isEqualTo(1100L);

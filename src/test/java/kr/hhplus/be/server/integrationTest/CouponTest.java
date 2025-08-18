@@ -191,21 +191,16 @@ public class CouponTest {
 
         final int numberOfThreads = 100; // 동시 요청할 사용자 수
         final Long couponIdToIssue = returnCoupon.getId();
-        final Long baseUserId = 1L; // 사용자 ID 시작 번호
+        final Long baseUserId = 1L;
 
-        // CountDownLatch: 모든 스레드가 동시에 시작하도록 조율 (startLatch),
-        // 모든 스레드가 완료될 때까지 메인 스레드 대기 (endLatch)
         final CountDownLatch startLatch = new CountDownLatch(1);
         final CountDownLatch endLatch = new CountDownLatch(numberOfThreads);
 
-        // ExecutorService: 스레드 풀 생성
-        ExecutorService executorService = Executors.newFixedThreadPool(32); // 적절한 스레드 풀 크기
+        ExecutorService executorService = Executors.newFixedThreadPool(32);
 
-        // 성공 및 실패 카운트 (AtomicInteger는 스레드 안전한 카운터)
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failCount = new AtomicInteger(0);
 
-        // when (여러 스레드에서 동시에 쿠폰 발급 요청)
         IntStream.range(0, numberOfThreads).forEach(i -> executorService.submit(() -> {
             try {
                 startLatch.await(); // 모든 스레드가 동시에 시작할 때까지 대기
@@ -218,13 +213,12 @@ public class CouponTest {
                 MvcResult result = mockMvc.perform(post("/coupons/issue")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(requestBodyJson))
-                        .andReturn(); // 응답 결과 가져오기
+                        .andReturn();
 
-                // 응답 상태 코드에 따라 성공/실패 카운트 증가
                 int status = result.getResponse().getStatus();
-                if (status == 200) { // HTTP 200 OK
+                if (status == 200) {
                     successCount.incrementAndGet();
-                } else { // 그 외 (예: 400 Bad Request, 409 Conflict, 500 Internal Server Error)
+                } else {
                     failCount.incrementAndGet();
                 }
 
@@ -232,29 +226,25 @@ public class CouponTest {
                 failCount.incrementAndGet();
                 System.err.println("요청 처리 중 예외 발생: " + e.getMessage());
             } finally {
-                endLatch.countDown(); // 작업 완료를 알림
+                endLatch.countDown();
             }
         }));
 
-        startLatch.countDown(); // 모든 스레드에 시작 신호
-        endLatch.await(); // 모든 스레드가 완료될 때까지 대기
+        startLatch.countDown();
+        endLatch.await();
 
-        executorService.shutdown(); // 스레드 풀 종료
+        executorService.shutdown();
 
-        // 1. 성공 요청은 정확히 1건
         assertThat(successCount.get()).isEqualTo(1);
 
-        // 1. 실제로 발급된 쿠폰 이력은 1개여야 함
-        long issuedCouponCount = couponHistRepository.count(); // 모든 이력 카운트
+        // 실제로 발급된 쿠폰 이력은 1개여야 함
+        long issuedCouponCount = couponHistRepository.count();
+
         assertThat(issuedCouponCount).isEqualTo(couponHists.size() + 1); // 기존 10개 + 새로 발급된 1개
-
-        // 2. 성공한 요청은 정확히 1개여야 함
         assertThat(successCount.get()).isEqualTo(1);
-
-        // 3. 실패한 요청은 (총 요청 수 - 성공한 요청 수)여야 함
         assertThat(failCount.get()).isEqualTo(numberOfThreads - 1);
 
-        // 4. 쿠폰의 잔여 수량이 0이 되었는지 확인
+        // 쿠폰의 잔여 수량이 0이 되었는지 확인
         Coupon updatedCoupon = couponRepository.findById(couponIdToIssue).orElseThrow();
         assertThat(updatedCoupon.getRemainQuantity()).isEqualTo(0);
         assertThat(updatedCoupon.getVersion()).isGreaterThan(coupon.getVersion()); // 버전 증가 확인 (낙관적 락)

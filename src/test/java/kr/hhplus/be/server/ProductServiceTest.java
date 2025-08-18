@@ -45,13 +45,10 @@ public class ProductServiceTest {
     @DisplayName("상품 목록이 없을 경우")
     void 상품_목록이_없을_경우() {
 
-        // given
         given(productRepository.findAll()).willReturn(Collections.emptyList());
 
-        // when
         List<ResponseProduct> response = productService.getProductList();
 
-        // then
         assertThat(response).isNotNull().isEmpty();
     }
 
@@ -65,13 +62,10 @@ public class ProductServiceTest {
                 new Product(3, "상품3", ProductStatus.ACTIVE, 13, 3, 2100L, "침구류")
         );
 
-        // given
         given(productRepository.findAll()).willReturn(products);
 
-        // when
         List<ResponseProduct> response = productService.getProductList();
 
-        // then
         assertThat(response).hasSize(3);
         assertThat(response.get(0).productName()).isEqualTo("상품1");
         assertThat(response.get(1).price()).isEqualTo(2000L);
@@ -88,13 +82,10 @@ public class ProductServiceTest {
     @DisplayName("상품이 없을 경우")
     void 상품이_없을_경우() {
 
-        // given
         given(productRepository.findTop5ByOrderBySellQuantityDesc()).willReturn(Collections.emptyList());
 
-        // when
         List<ResponseProduct> response = productService.getProductList();
 
-        // then
         assertThat(response).isNotNull().isEmpty();
     }
 
@@ -108,13 +99,10 @@ public class ProductServiceTest {
                 new Product(3, "상품3", ProductStatus.ACTIVE, 13, 12, 2100L, "의류")
         );
 
-        // given
         given(productRepository.findTop5ByOrderBySellQuantityDesc()).willReturn(products);
 
-        // when
         List<ResponseProduct> response = productService.getProductListTop5();
 
-        // then
         assertThat(response).hasSize(3);
         assertThat(response.get(0).productName()).isEqualTo("상품1");
         assertThat(response.get(1).price()).isEqualTo(2000L);
@@ -132,13 +120,10 @@ public class ProductServiceTest {
                 new Product(5, "상품5", ProductStatus.ACTIVE, 15, 11, 1800L, "문구류")
         );
 
-        // given
         given(productRepository.findTop5ByOrderBySellQuantityDesc()).willReturn(products);
 
-        // when
         List<ResponseProduct> response = productService.getProductListTop5();
 
-        // then
         assertThat(response).hasSize(5);
         assertThat(response.get(0).productName()).isEqualTo("상품1");
         assertThat(response.get(1).price()).isEqualTo(2000L);
@@ -157,10 +142,8 @@ public class ProductServiceTest {
 
         Long id = 1L;
 
-        // given
         given(productRepository.findById(id)).willReturn(Optional.empty());
 
-        // when, then
         assertThatThrownBy(() -> productService.getProduct(id))
                 .isInstanceOf(RuntimeException.class);
 
@@ -176,13 +159,10 @@ public class ProductServiceTest {
                 1, "상품1", ProductStatus.ACTIVE,10, 9,1000L, "문구류"
         );
 
-        // given
         given(productRepository.findById(id)).willReturn(Optional.of(product));
 
-        // when
         ResponseProduct result = productService.getProduct(id);
 
-        //then
         assertThat(result.productId()).isEqualTo(product.getId());
         assertThat(result.productName()).isEqualTo(product.getName());
         assertThat(result.productQuantity()).isEqualTo(product.getQuantity());

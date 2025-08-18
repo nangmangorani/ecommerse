@@ -19,7 +19,7 @@ public record ResponseOrder(
                 order.getUser().getName(),
                 order.getProduct().getName(),
                 couponName,
-                hasCoupon,  // 쿠폰 존재 여부
+                hasCoupon,
                 order.getOriginalPrice(),
                 order.getDiscountedPrice()
         );

@@ -57,10 +57,8 @@ public class PaymentService {
 
     public User chargePoint(User user, RequestPointCharge requestPointCharge) {
 
-        // 포인트 충전
         user.addPoint(requestPointCharge.userPoint());
 
-        // 결제이력 추가
         Payment payment = new Payment(
                 PaymentStatus.COMPLETED,
                 requestPointCharge.userPoint(),
@@ -69,7 +67,6 @@ public class PaymentService {
 
         Payment returnPayment = paymentRepository.save(payment);
 
-        // 포인트 이력 저장
         pointHistService.createPointHist(user,
                 TransactionType.CHARGE,
                 returnPayment.getPrice(),

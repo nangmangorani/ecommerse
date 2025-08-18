@@ -17,7 +17,6 @@ public class CouponHistService {
 
     private final CouponHistRepository couponHistRepository;
 
-    // 사용자 쿠폰이력조회
     public boolean getCouponHist(RequestUserCoupon requestUserCoupon) {
 
         Optional<CouponHist> couponHist = couponHistRepository.findByCouponIdAndUserId(
@@ -28,7 +27,6 @@ public class CouponHistService {
         return couponHist.isPresent();
     }
 
-    // 쿠폰이력추가
     public CouponHist addCouponHist(RequestUserCoupon requestUserCoupon, Coupon coupon) {
 
         CouponHist couponHist = new CouponHist(

@@ -8,8 +8,7 @@ import lombok.Getter;
 @Entity
 @Getter
 @Table(name = "PRODUCT")
-public class
-Product {
+public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -72,7 +71,6 @@ Product {
         this.quantity += quantity;
     }
 
-    // 상품원가검증과 할인가검증은 현재 하나의 메소드에서 처리
     public void checkPrice(long requestPrice, long productPrice) {
         if(requestPrice != productPrice) {
             throw new CustomException("요청하신 상품 금액이 다릅니다.");

@@ -59,7 +59,7 @@ public class ProductCacheService {
                 List<ResponseProduct> products = list.stream()
                         .map(this::convertToResponseProduct)
                         .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
+                        .toList();
 
                 if (!products.isEmpty()) {
                     log.debug("TOP5 상품 캐시 히트 (객체 변환)");

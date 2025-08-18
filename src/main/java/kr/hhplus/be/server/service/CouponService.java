@@ -23,15 +23,12 @@ public class CouponService {
     @Transactional
     public ResponseUserCoupon getCoupon(RequestUserCoupon requestUserCoupon) {
 
-        // 1. 발급하려는 쿠폰을 hist에서 사용자가 받았는지 조회
         Boolean couponYn = couponHistService.getCouponHist(requestUserCoupon);
 
         if(couponYn) {
             throw new CustomException("쿠폰을 이미 발급받았음");
         }
 
-
-        // 쿠폰발급
         Coupon coupon = couponRepository.findById(requestUserCoupon.couponId())
                 .orElseThrow(() -> new CustomException("쿠폰을 찾을 수 없음"));
 
@@ -48,7 +45,6 @@ public class CouponService {
             throw new CustomException("알 수 없는 오류 발생");
         }
 
-        // 쿠폰이력추가
         CouponHist couponHist = couponHistService.addCouponHist(requestUserCoupon, coupon);
 
         ResponseUserCoupon responseUserCoupon = new ResponseUserCoupon(
