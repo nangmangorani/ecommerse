@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.hhplus.be.server.dto.point.RequestPointCharge;
 import kr.hhplus.be.server.dto.point.ResponseUserPoint;
 import kr.hhplus.be.server.service.PointHistService;
+import kr.hhplus.be.server.service.PointService;
 import kr.hhplus.be.server.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,11 +18,12 @@ import org.springframework.web.bind.annotation.*;
 public class PointController {
 
     private final UserService userService;
+    private final PointService pointService;
 
     @GetMapping("/{id}")
     public ResponseEntity<ResponseUserPoint> getUserPoint(@PathVariable("id") long id) {
 
-        ResponseUserPoint userPointInfo = userService.getPoint(id);
+        ResponseUserPoint userPointInfo = pointService.getPoint(id);
 
         return ResponseEntity.ok(userPointInfo);
     }
@@ -30,7 +32,7 @@ public class PointController {
     @PostMapping("/charge")
     public ResponseEntity<ResponseUserPoint> chargeUserPoint(@RequestBody RequestPointCharge requestPointCharge) {
 
-        ResponseUserPoint userPointInfo = userService.chargePoint(requestPointCharge);
+        ResponseUserPoint userPointInfo = pointService.chargePoint(requestPointCharge);
 
         return ResponseEntity.ok(userPointInfo);
     }

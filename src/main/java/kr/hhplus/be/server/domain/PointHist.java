@@ -2,6 +2,7 @@ package kr.hhplus.be.server.domain;
 
 import jakarta.persistence.*;
 import kr.hhplus.be.server.enums.TransactionType;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -9,6 +10,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "POINT_HIST")
 @Getter
+@AllArgsConstructor
 public class PointHist {
 
     @Id
