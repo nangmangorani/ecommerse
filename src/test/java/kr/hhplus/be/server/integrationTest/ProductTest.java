@@ -4,7 +4,6 @@ import kr.hhplus.be.server.domain.Product;
 import kr.hhplus.be.server.dto.product.ResponseProduct;
 import kr.hhplus.be.server.enums.ProductStatus;
 import kr.hhplus.be.server.repository.ProductRepository;
-import kr.hhplus.be.server.service.ProductCacheService;
 import kr.hhplus.be.server.service.ProductService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,9 +47,6 @@ public class ProductTest {
     private ProductService productService;
 
     @Autowired
-    private ProductCacheService cacheService;
-
-    @Autowired
     private ProductRepository productRepository;
 
     @Autowired
@@ -66,7 +62,7 @@ public class ProductTest {
     void setUp() {
         productRepository.deleteAll();
 
-        cacheService.invalidateTop5Cache();
+        productService.invalidateTop5Cache();
         products = Arrays.asList(
                 new Product("iPhone 15", ProductStatus.ACTIVE, 50, 25, 1200000L, "전자제품"),
                 new Product("삼성 갤럭시 S24", ProductStatus.ACTIVE, 30, 15, 1100000L, "전자제품"),
@@ -220,8 +216,7 @@ public class ProductTest {
     private PerformanceResult measureDBPerformance() throws InterruptedException {
         log.info(" 캐시 없이 DB 직접 조회 성능 측정 중...");
 
-        // 캐시 무효화 -> 모든 요청 DB로
-        cacheService.invalidateTop5Cache();
+        productService.invalidateTop5Cache();
 
         ExecutorService executor = Executors.newFixedThreadPool(10);
         CountDownLatch latch = new CountDownLatch(TEST_REQUESTS);
@@ -230,7 +225,7 @@ public class ProductTest {
         AtomicInteger successCount = new AtomicInteger(0);
 
         for (int i = 0; i < WARM_UP_REQUESTS; i++) {
-            cacheService.invalidateTop5Cache();
+            productService.invalidateTop5Cache();
             productService.getProductListTop5();
         }
 
@@ -239,7 +234,7 @@ public class ProductTest {
         for (int i = 0; i < TEST_REQUESTS; i++) {
             executor.submit(() -> {
                 try {
-                    cacheService.invalidateTop5Cache();
+                    productService.invalidateTop5Cache();
                     long requestStart = System.currentTimeMillis();
                     List<ResponseProduct> result = productService.getProductListTop5();
                     long requestTime = System.currentTimeMillis() - requestStart;

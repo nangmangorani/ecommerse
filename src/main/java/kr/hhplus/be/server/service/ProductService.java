@@ -8,6 +8,8 @@ import kr.hhplus.be.server.exception.custom.CustomException;
 import kr.hhplus.be.server.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +25,6 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final RedisTemplate<String, Object> redisTemplate;
-    private final ProductCacheService cacheService;
 
     /**
      * 상품리스트 조회
@@ -52,36 +53,9 @@ public class ProductService {
      * Cache-Aside 패턴 사용
      * @return List<ResponseProductList>
      */
+    @Cacheable(value = "top5-products", key = "'sellQuantity'")
     public List<ResponseProduct> getProductListTop5() {
-
-        long startTime = System.currentTimeMillis();
-
-        try{
-            List<ResponseProduct> cachedProducts = cacheService.getTop5Products();
-
-            if (cachedProducts != null && !cachedProducts.isEmpty()) {
-                cacheService.recordCacheHit();
-                long duration = System.currentTimeMillis() - startTime;
-                log.info("TOP5 상품 조회 완료 (캐시 히트), 응답시간: {}ms", duration);
-                return cachedProducts;
-            }
-
-            cacheService.recordCacheMiss();
-            log.info("TOP5 상품 캐시 미스 - DB 조회 시작");
-
-            List<ResponseProduct> products = getTop5ProductsFromDB();
-
-            cacheService.setTop5Products(products);
-
-            long duration = System.currentTimeMillis() - startTime;
-            log.info("TOP5 상품 조회 완료 (DB), 응답시간: {}ms", duration);
-
-            return products;
-        } catch(Exception e) {
-            long duration = System.currentTimeMillis() - startTime;
-            log.error("TOP5 상품 조회 중 오류 발생, 응답시간: {}ms", duration, e);
-            return getTop5ProductsFromDB();
-        }
+        return getTop5ProductsFromDB();
     }
 
 
@@ -130,4 +104,23 @@ public class ProductService {
                 .map(ResponseProduct::from)
                 .toList();
     }
+
+    /**
+     * TOP5 캐시 무효화
+     */
+    @CacheEvict(value = "top5-products", key = "'sellQuantity'")
+    public void invalidateTop5Cache() {
+        log.info("TOP5 캐시 무효화");
+    }
+
+    @CacheEvict(value = "top5-products", key = "'sellQuantity'")
+    @Transactional
+    public void updateSellQuantity(Long productId, int soldQuantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new CustomException("상품 없음"));
+
+        product.increaseStock(soldQuantity);
+        log.info("상품 {} 판매량 업데이트 + 캐시 무효화", productId);
+    }
+
 }
