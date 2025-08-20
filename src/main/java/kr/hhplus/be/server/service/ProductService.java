@@ -11,11 +11,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -103,6 +109,49 @@ public class ProductService {
         return products.stream()
                 .map(ResponseProduct::from)
                 .toList();
+    }
+
+    public List<ResponseProduct> getPopularProducts(String period, int limit) {
+
+        String key = getPopularProductKey(period);
+
+        Set<ZSetOperations.TypedTuple<Object>> topProducts =
+                redisTemplate.opsForZSet().reverseRangeWithScores(key, 0, limit -1);
+
+        if (topProducts == null || topProducts.isEmpty()) {
+            log.info("Redis에 {}기간 인기상품 데이터 없음 - 기존 TOP5 로직으로 대체", period);
+            return getTop5ProductsFromDB(); // 기존 sellQuantity 기반 로직으로 폴백
+        }
+        List<Long> productIds = topProducts.stream()
+                .map(tuple -> {
+                    log.debug("상품 ID: {}, 점수: {}", tuple.getValue(), tuple.getScore());
+                    return Long.parseLong(tuple.getValue().toString());
+                })
+                .toList();
+
+        List<Product> products = productRepository.findByIdInAndStatus(productIds, ProductStatus.ACTIVE);
+
+        return productIds.stream()
+                .map(id -> products.stream()
+                        .filter(p -> p.getId().equals(id))
+                        .findFirst()
+                        .map(ResponseProduct::from)
+                        .orElse(null))
+                .filter(product -> product != null)
+                .toList();
+    }
+
+    private String getPopularProductKey(String period) {
+        if ("weekly".equals(period)) {
+            int weekOfYear = LocalDate.now().get(ChronoField.ALIGNED_WEEK_OF_YEAR);
+            int year = LocalDate.now().getYear();
+            return "popular:weekly:" + year + ":" + weekOfYear;
+        } else if ("daily".equals(period)) {
+            String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+            return "popular:daily:" + today;
+        }
+
+        throw new CustomException("지원하지 않는 기간: " + period);
     }
 
     /**

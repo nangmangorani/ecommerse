@@ -7,25 +7,34 @@ import kr.hhplus.be.server.enums.UserStatus;
 import kr.hhplus.be.server.exception.custom.CustomException;
 import kr.hhplus.be.server.service.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class OrderEventHandler {
 
     private final ProductService productService;
     private final UserService userService;
+    private final PointService pointService;
     private final PaymentService paymentService;
     private final OrderService orderService;
     private final OrderEventPublisher orderEventPublisher;
     private final PointHistService pointHistService;
+    private final RedisTemplate<String, Object> redisTemplate;
     private final ExecutorService stockDecreaseExecutor = Executors.newSingleThreadExecutor();
 
     @EventListener
@@ -33,7 +42,7 @@ public class OrderEventHandler {
     @Transactional
     public void handlePointDeduction(OrderCreatedEvent event) {
         try {
-            userService.deductPointsWithLock(
+            pointService.deductPointsWithLock(
                     event.getUserId(),
                     event.getRequestPrice()
             );
@@ -69,6 +78,9 @@ public class OrderEventHandler {
                         result.getId()
                 );
 
+                updatePopularityScore(event.getProductId(), event.getRequestQuantity());
+
+
                 orderEventPublisher.publishPaymentCompleted(
                         PaymentCompletedEvent.of(event, result.getId(),true)
                 );
@@ -81,8 +93,25 @@ public class OrderEventHandler {
         }
     }
 
+    private void updatePopularityScore(Long productId, int quantity) {
+        try {
+            String dailyKey = getDailyPopularKey();
+            redisTemplate.opsForZSet().incrementScore(dailyKey, productId.toString(), quantity);
+            redisTemplate.expire(dailyKey, Duration.ofDays(1));
+
+            String weeklyKey = getWeeklyPopularKey();
+            redisTemplate.opsForZSet().incrementScore(weeklyKey, productId.toString(), quantity);
+            redisTemplate.expire(weeklyKey, Duration.ofDays(7));
+
+            log.info("상품 {} 인기도 점수 {}점 증가", productId, quantity);
+
+        } catch (Exception e) {
+            log.error("인기상품 점수 업데이트 실패 - 상품 ID: {}, 수량: {}", productId, quantity, e);
+        }
+    }
+
     private void handlePaymentFailure(PointDeductedEvent event) {
-        userService.refundPoints(event.getUserId(), event.getRequestPrice());
+        pointService.refundPoints(event.getUserId(), event.getRequestPrice());
 
         productService.increaseStock(event.getProductId(), event.getRequestQuantity());
 
@@ -101,4 +130,15 @@ public class OrderEventHandler {
             Thread.currentThread().interrupt();
         }
     }
+
+    private String getDailyPopularKey() {
+        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        return "popular:daily:" + today;
+    }
+
+    private String getWeeklyPopularKey() {
+        int weekOfYear = LocalDate.now().get(ChronoField.ALIGNED_WEEK_OF_YEAR);
+        return "popular:weekly:" + LocalDate.now().getYear() + ":" + weekOfYear;
+    }
+
 }
