@@ -26,7 +26,6 @@ public class PaymentService {
 
     public void paymentProduct(RequestOrder requestOrder, User user, Product product, Order order) {
 
-        // 결제이력 추가
         Payment payment = new Payment(
             PaymentStatus.COMPLETED,
                 requestOrder.requestPrice(),

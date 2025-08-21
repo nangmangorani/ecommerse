@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.BDDMockito.*;
 
 public class ProductServiceTest {
@@ -49,7 +50,10 @@ public class ProductServiceTest {
 
         List<ResponseProduct> response = productService.getProductList();
 
-        assertThat(response).isNotNull().isEmpty();
+        assertAll("빈 상품 목록 검증",
+                () -> assertThat(response).isNotNull(),
+                () -> assertThat(response).isEmpty()
+        );
     }
 
     @Test
@@ -62,14 +66,16 @@ public class ProductServiceTest {
                 new Product(3, "상품3", ProductStatus.ACTIVE, 13, 3, 2100L, "침구류")
         );
 
-        given(productRepository.findAll()).willReturn(products);
+        given(productRepository.findByStatus(ProductStatus.ACTIVE)).willReturn(products);
 
         List<ResponseProduct> response = productService.getProductList();
 
-        assertThat(response).hasSize(3);
-        assertThat(response.get(0).productName()).isEqualTo("상품1");
-        assertThat(response.get(1).price()).isEqualTo(2000L);
-        assertThat(response.get(2).productQuantity()).isEqualTo(13);
+        assertAll("상품 목록 조회 결과 검증",
+                () -> assertThat(response).hasSize(3),
+                () -> assertThat(response.get(0).productName()).isEqualTo("상품1"),
+                () -> assertThat(response.get(1).price()).isEqualTo(2000L),
+                () -> assertThat(response.get(2).productQuantity()).isEqualTo(13)
+        );
     }
 
     /**
@@ -86,7 +92,10 @@ public class ProductServiceTest {
 
         List<ResponseProduct> response = productService.getProductList();
 
-        assertThat(response).isNotNull().isEmpty();
+        assertAll("빈 TOP5 상품 목록 검증",
+                () -> assertThat(response).isNotNull(),
+                () -> assertThat(response).isEmpty()
+        );
     }
 
     @Test
@@ -103,11 +112,16 @@ public class ProductServiceTest {
 
         List<ResponseProduct> response = productService.getProductListTop5();
 
-        assertThat(response).hasSize(3);
-        assertThat(response.get(0).productName()).isEqualTo("상품1");
-        assertThat(response.get(1).price()).isEqualTo(2000L);
-        assertThat(response.get(2).productQuantity()).isEqualTo(13);
-    }
+        assertAll("5개 미만 상품 조회 결과 검증",
+                () -> assertThat(response).hasSize(3),
+                () -> assertThat(response.get(0).productName()).isEqualTo("상품1"),
+                () -> assertThat(response.get(1).price()).isEqualTo(2000L),
+                () -> assertThat(response.get(2).productQuantity()).isEqualTo(13),
+                () -> assertThat(response.get(0).sellQuantity()).isEqualTo(10),
+                () -> assertThat(response.get(1).sellQuantity()).isEqualTo(11),
+                () -> assertThat(response.get(2).sellQuantity()).isEqualTo(12)
+        );
+        }
 
     @Test
     @DisplayName("상위 5개 상품 정상적으로 조회")
@@ -124,10 +138,15 @@ public class ProductServiceTest {
 
         List<ResponseProduct> response = productService.getProductListTop5();
 
-        assertThat(response).hasSize(5);
-        assertThat(response.get(0).productName()).isEqualTo("상품1");
-        assertThat(response.get(1).price()).isEqualTo(2000L);
-        assertThat(response.get(2).productQuantity()).isEqualTo(13);
+        assertAll("TOP5 상품 조회 결과 검증",
+                () -> assertThat(response).hasSize(5),
+                () -> assertThat(response.get(0).productName()).isEqualTo("상품1"),
+                () -> assertThat(response.get(1).price()).isEqualTo(2000L),
+                () -> assertThat(response.get(2).productQuantity()).isEqualTo(13),
+                () -> assertThat(response.get(3).productName()).isEqualTo("상품4"),
+                () -> assertThat(response.get(4).price()).isEqualTo(1800L)
+        );
+
     }
 
     /**
@@ -163,12 +182,15 @@ public class ProductServiceTest {
 
         ResponseProduct result = productService.getProduct(id);
 
-        assertThat(result.productId()).isEqualTo(product.getId());
-        assertThat(result.productName()).isEqualTo(product.getName());
-        assertThat(result.productQuantity()).isEqualTo(product.getQuantity());
-        assertThat(result.price()).isEqualTo(product.getPrice());
-        assertThat(result.productType()).isEqualTo(product.getType());
-
+        assertAll("상품 상세 조회 결과 검증",
+                () -> assertThat(result).isNotNull(),
+                () -> assertThat(result.productId()).isEqualTo(product.getId()),
+                () -> assertThat(result.productName()).isEqualTo(product.getName()),
+                () -> assertThat(result.productQuantity()).isEqualTo(product.getQuantity()),
+                () -> assertThat(result.sellQuantity()).isEqualTo(product.getSellQuantity()),
+                () -> assertThat(result.price()).isEqualTo(product.getPrice()),
+                () -> assertThat(result.productType()).isEqualTo(product.getType())
+        );
     }
 
 }

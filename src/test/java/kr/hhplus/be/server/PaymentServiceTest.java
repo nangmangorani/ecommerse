@@ -16,6 +16,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.BDDMockito.*;
 
@@ -57,8 +60,8 @@ public class PaymentServiceTest {
 
         User user = new User(1, "이승준", UserStatus.ACTIVE, 5000L);
         Product product = new Product(1, "상품1", ProductStatus.ACTIVE, 2, 10, 1000L, "필기구");
-        PointHist pointHist = new PointHist(TransactionType.USE, 100L, 1000L,1);
-        Payment payment = new Payment(PaymentStatus.COMPLETED, 800, TransactionType.USE, 1L);
+        PointHist pointHist = new PointHist(user, TransactionType.USE, 100L, 1000L,1);
+        Payment payment = new Payment(1L, PaymentStatus.COMPLETED, 800, TransactionType.USE, LocalDateTime.now(),1L);
         Coupon coupon = new Coupon("쿠폰", CouponStatus.ACTIVE, 10,10,5,1);
         Order order = new Order(user, product, coupon, 1000L, 800L,1, OrderStatus.COMPLETED);
 

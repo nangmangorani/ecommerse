@@ -2,6 +2,8 @@ package kr.hhplus.be.server.domain;
 
 import jakarta.persistence.*;
 import kr.hhplus.be.server.enums.CouponHistStatus;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -9,6 +11,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "COUPON_HIST")
 @Getter
+@Builder
+@AllArgsConstructor
 public class CouponHist {
 
     @Id

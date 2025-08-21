@@ -8,7 +8,9 @@ import kr.hhplus.be.server.dto.point.ResponseUserPoint;
 import kr.hhplus.be.server.enums.UserStatus;
 import kr.hhplus.be.server.repository.PointHistRepository;
 import kr.hhplus.be.server.repository.UserRepository;
+import kr.hhplus.be.server.service.PaymentService;
 import kr.hhplus.be.server.service.PointHistService;
+import kr.hhplus.be.server.service.PointService;
 import kr.hhplus.be.server.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,12 +34,17 @@ public class PointHistServiceTest {
     @InjectMocks
     private UserService userService;
 
+    @InjectMocks
+    private PointService pointService;
 
     @Mock
     private UserRepository userRepository;
 
     @Mock
     private PointHistRepository pointHistRepository;
+
+    @Mock
+    private PaymentService paymentService;
 
     long id = 1;
 
@@ -68,7 +75,7 @@ public class PointHistServiceTest {
 
         given(userRepository.findById(id)).willReturn(user);
 
-        assertThatThrownBy(() -> userService.chargePoint(requestPointCharge))
+        assertThatThrownBy(() -> pointService.chargePoint(requestPointCharge))
                 .isInstanceOf(RuntimeException.class);
 
     }
@@ -82,7 +89,7 @@ public class PointHistServiceTest {
 
         given(pointHistRepository.save(pointHist)).willReturn(null);
 
-        assertThatThrownBy(() -> userService.chargePoint(requestPointCharge))
+        assertThatThrownBy(() -> pointService.chargePoint(requestPointCharge))
                 .isInstanceOf(RuntimeException.class);
     }
 
@@ -90,16 +97,19 @@ public class PointHistServiceTest {
     @DisplayName("포인트 충전 후 이력이 올바르게 쌓인 경우")
     void 포인트_충전후_이력이_올바르게_쌓인_경우() {
 
-        Optional<User> user = Optional.of(new User(1, "이승준", UserStatus.ACTIVE, 1000L));
+        Optional<User> user = Optional.of(new User(1L, "이승준", UserStatus.ACTIVE, 1000L));
         RequestPointCharge requestPointCharge = new RequestPointCharge(1, 100L);
         PointHist pointHist = new PointHist(TransactionType.CHARGE, 100L, 1000L,1);
 
-        given(userRepository.findById(requestPointCharge.userId())).willReturn(user);
+        User chargedUser = new User(1L, "이승준", UserStatus.ACTIVE, requestPointCharge.userPoint() + user.get().getPoint());
+
+        given(userRepository.findByIdAndStatus(requestPointCharge.userId(), UserStatus.ACTIVE)).willReturn(user);
+        given(paymentService.chargePoint(user.get(), requestPointCharge)).willReturn(chargedUser);
         given(pointHistRepository.save(pointHist)).willReturn(pointHist);
 
-        ResponseUserPoint result = userService.chargePoint(requestPointCharge);
+        ResponseUserPoint result = pointService.chargePoint(requestPointCharge);
 
-        assertThat(result.userId()).isEqualTo(1);
+        assertThat(result.userId()).isEqualTo(1L);
         assertThat(result.userName()).isEqualTo("이승준");
         assertThat(result.userPoint()).isEqualTo(1100L);
 

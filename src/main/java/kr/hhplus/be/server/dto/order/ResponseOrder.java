@@ -13,7 +13,7 @@ public record ResponseOrder(
     public static ResponseOrder from(Order order) {
 
         boolean hasCoupon = order.getCoupon() != null;
-        String couponName = hasCoupon ? order.getCoupon().getName() : "쿠폰없음";
+        String couponName = hasCoupon ? order.getCoupon().getName() : "쿠폰을 찾을 수 없음";
 
         return new ResponseOrder(
                 order.getUser().getName(),

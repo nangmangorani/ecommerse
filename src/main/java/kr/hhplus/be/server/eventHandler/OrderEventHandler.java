@@ -96,12 +96,21 @@ public class OrderEventHandler {
     private void updatePopularityScore(Long productId, int quantity) {
         try {
             String dailyKey = getDailyPopularKey();
-            redisTemplate.opsForZSet().incrementScore(dailyKey, productId.toString(), quantity);
-            redisTemplate.expire(dailyKey, Duration.ofDays(1));
-
             String weeklyKey = getWeeklyPopularKey();
+
+            redisTemplate.opsForZSet().incrementScore(dailyKey, productId.toString(), quantity);
             redisTemplate.opsForZSet().incrementScore(weeklyKey, productId.toString(), quantity);
-            redisTemplate.expire(weeklyKey, Duration.ofDays(7));
+
+            Boolean dailyExpire = redisTemplate.expire(dailyKey, Duration.ofDays(1));
+            Boolean weeklyExpire = redisTemplate.expire(weeklyKey, Duration.ofDays(7));
+
+            if (!Boolean.TRUE.equals(dailyExpire)) {
+                log.warn("일간 인기상품 TTL 설정 실패 - key: {}", dailyKey);
+            }
+
+            if (!Boolean.TRUE.equals(weeklyExpire)) {
+                log.warn("주간 인기상품 TTL 설정 실패 - key: {}", weeklyKey);
+            }
 
             log.info("상품 {} 인기도 점수 {}점 증가", productId, quantity);
 

@@ -33,19 +33,14 @@ public class OrderService {
     @Transactional
     public ResponseOrder orderProduct(RequestOrder requestOrder) {
 
-        // 사용자 조회 및 잔고확인
         User user = userService.getUserAndCheckBalance(requestOrder);
 
-        // 포인트 차감
         user.usePoint(requestOrder.requestPrice());
 
-        // 주문시 재고확인
         Product product = productService.getProductInfo(requestOrder);
 
-        // 상품 재고 차감
         product.decreaseStock(requestOrder.requestQuantity());
 
-        // 쿠폰 조회
         Coupon coupon = couponService.searchCoupon(requestOrder.couponId());
 
         Order order = new Order(
@@ -57,10 +52,8 @@ public class OrderService {
                 requestOrder.requestQuantity(),
                 OrderStatus.IN_PROGRESS
         );
-        // 주문 추가
         Order returnOrder = orderRepository.save(order);
 
-        // 재고 확인 후 결제
         paymentService.paymentProduct(requestOrder, user, product, returnOrder);
 
         ResponseOrder responseOrder = new ResponseOrder(
@@ -86,11 +79,9 @@ public class OrderService {
     @Transactional
     public void cancelOrder(Long orderId) {
 
-        // 1. 주문 조회
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new CustomException("주문을 찾을 수 없습니다"));
 
-        // 2. 주문 상태를 취소로 변경
         order.cancel();
 
     }

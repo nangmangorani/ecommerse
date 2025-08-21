@@ -120,7 +120,7 @@ public class ProductService {
 
         if (topProducts == null || topProducts.isEmpty()) {
             log.info("Redis에 {}기간 인기상품 데이터 없음 - 기존 TOP5 로직으로 대체", period);
-            return getTop5ProductsFromDB(); // 기존 sellQuantity 기반 로직으로 폴백
+            return getTop5ProductsFromDB();
         }
         List<Long> productIds = topProducts.stream()
                 .map(tuple -> {
@@ -160,16 +160,6 @@ public class ProductService {
     @CacheEvict(value = "top5-products", key = "'sellQuantity'")
     public void invalidateTop5Cache() {
         log.info("TOP5 캐시 무효화");
-    }
-
-    @CacheEvict(value = "top5-products", key = "'sellQuantity'")
-    @Transactional
-    public void updateSellQuantity(Long productId, int soldQuantity) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new CustomException("상품 없음"));
-
-        product.increaseStock(soldQuantity);
-        log.info("상품 {} 판매량 업데이트 + 캐시 무효화", productId);
     }
 
 }
