@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.BDDMockito.*;
 
 public class ProductServiceTest {
@@ -45,14 +46,14 @@ public class ProductServiceTest {
     @DisplayName("상품 목록이 없을 경우")
     void 상품_목록이_없을_경우() {
 
-        // given
         given(productRepository.findAll()).willReturn(Collections.emptyList());
 
-        // when
         List<ResponseProduct> response = productService.getProductList();
 
-        // then
-        assertThat(response).isNotNull().isEmpty();
+        assertAll("빈 상품 목록 검증",
+                () -> assertThat(response).isNotNull(),
+                () -> assertThat(response).isEmpty()
+        );
     }
 
     @Test
@@ -65,17 +66,16 @@ public class ProductServiceTest {
                 new Product(3, "상품3", ProductStatus.ACTIVE, 13, 3, 2100L, "침구류")
         );
 
-        // given
-        given(productRepository.findAll()).willReturn(products);
+        given(productRepository.findByStatus(ProductStatus.ACTIVE)).willReturn(products);
 
-        // when
         List<ResponseProduct> response = productService.getProductList();
 
-        // then
-        assertThat(response).hasSize(3);
-        assertThat(response.get(0).productName()).isEqualTo("상품1");
-        assertThat(response.get(1).price()).isEqualTo(2000L);
-        assertThat(response.get(2).productQuantity()).isEqualTo(13);
+        assertAll("상품 목록 조회 결과 검증",
+                () -> assertThat(response).hasSize(3),
+                () -> assertThat(response.get(0).productName()).isEqualTo("상품1"),
+                () -> assertThat(response.get(1).price()).isEqualTo(2000L),
+                () -> assertThat(response.get(2).productQuantity()).isEqualTo(13)
+        );
     }
 
     /**
@@ -88,14 +88,14 @@ public class ProductServiceTest {
     @DisplayName("상품이 없을 경우")
     void 상품이_없을_경우() {
 
-        // given
         given(productRepository.findTop5ByOrderBySellQuantityDesc()).willReturn(Collections.emptyList());
 
-        // when
         List<ResponseProduct> response = productService.getProductList();
 
-        // then
-        assertThat(response).isNotNull().isEmpty();
+        assertAll("빈 TOP5 상품 목록 검증",
+                () -> assertThat(response).isNotNull(),
+                () -> assertThat(response).isEmpty()
+        );
     }
 
     @Test
@@ -108,18 +108,20 @@ public class ProductServiceTest {
                 new Product(3, "상품3", ProductStatus.ACTIVE, 13, 12, 2100L, "의류")
         );
 
-        // given
         given(productRepository.findTop5ByOrderBySellQuantityDesc()).willReturn(products);
 
-        // when
         List<ResponseProduct> response = productService.getProductListTop5();
 
-        // then
-        assertThat(response).hasSize(3);
-        assertThat(response.get(0).productName()).isEqualTo("상품1");
-        assertThat(response.get(1).price()).isEqualTo(2000L);
-        assertThat(response.get(2).productQuantity()).isEqualTo(13);
-    }
+        assertAll("5개 미만 상품 조회 결과 검증",
+                () -> assertThat(response).hasSize(3),
+                () -> assertThat(response.get(0).productName()).isEqualTo("상품1"),
+                () -> assertThat(response.get(1).price()).isEqualTo(2000L),
+                () -> assertThat(response.get(2).productQuantity()).isEqualTo(13),
+                () -> assertThat(response.get(0).sellQuantity()).isEqualTo(10),
+                () -> assertThat(response.get(1).sellQuantity()).isEqualTo(11),
+                () -> assertThat(response.get(2).sellQuantity()).isEqualTo(12)
+        );
+        }
 
     @Test
     @DisplayName("상위 5개 상품 정상적으로 조회")
@@ -132,17 +134,19 @@ public class ProductServiceTest {
                 new Product(5, "상품5", ProductStatus.ACTIVE, 15, 11, 1800L, "문구류")
         );
 
-        // given
         given(productRepository.findTop5ByOrderBySellQuantityDesc()).willReturn(products);
 
-        // when
         List<ResponseProduct> response = productService.getProductListTop5();
 
-        // then
-        assertThat(response).hasSize(5);
-        assertThat(response.get(0).productName()).isEqualTo("상품1");
-        assertThat(response.get(1).price()).isEqualTo(2000L);
-        assertThat(response.get(2).productQuantity()).isEqualTo(13);
+        assertAll("TOP5 상품 조회 결과 검증",
+                () -> assertThat(response).hasSize(5),
+                () -> assertThat(response.get(0).productName()).isEqualTo("상품1"),
+                () -> assertThat(response.get(1).price()).isEqualTo(2000L),
+                () -> assertThat(response.get(2).productQuantity()).isEqualTo(13),
+                () -> assertThat(response.get(3).productName()).isEqualTo("상품4"),
+                () -> assertThat(response.get(4).price()).isEqualTo(1800L)
+        );
+
     }
 
     /**
@@ -157,10 +161,8 @@ public class ProductServiceTest {
 
         Long id = 1L;
 
-        // given
         given(productRepository.findById(id)).willReturn(Optional.empty());
 
-        // when, then
         assertThatThrownBy(() -> productService.getProduct(id))
                 .isInstanceOf(RuntimeException.class);
 
@@ -176,19 +178,19 @@ public class ProductServiceTest {
                 1, "상품1", ProductStatus.ACTIVE,10, 9,1000L, "문구류"
         );
 
-        // given
         given(productRepository.findById(id)).willReturn(Optional.of(product));
 
-        // when
         ResponseProduct result = productService.getProduct(id);
 
-        //then
-        assertThat(result.productId()).isEqualTo(product.getId());
-        assertThat(result.productName()).isEqualTo(product.getName());
-        assertThat(result.productQuantity()).isEqualTo(product.getQuantity());
-        assertThat(result.price()).isEqualTo(product.getPrice());
-        assertThat(result.productType()).isEqualTo(product.getType());
-
+        assertAll("상품 상세 조회 결과 검증",
+                () -> assertThat(result).isNotNull(),
+                () -> assertThat(result.productId()).isEqualTo(product.getId()),
+                () -> assertThat(result.productName()).isEqualTo(product.getName()),
+                () -> assertThat(result.productQuantity()).isEqualTo(product.getQuantity()),
+                () -> assertThat(result.sellQuantity()).isEqualTo(product.getSellQuantity()),
+                () -> assertThat(result.price()).isEqualTo(product.getPrice()),
+                () -> assertThat(result.productType()).isEqualTo(product.getType())
+        );
     }
 
 }

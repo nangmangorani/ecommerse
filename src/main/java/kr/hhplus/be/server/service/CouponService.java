@@ -8,64 +8,80 @@ import kr.hhplus.be.server.dto.coupon.ResponseUserCoupon;
 import kr.hhplus.be.server.enums.CouponStatus;
 import kr.hhplus.be.server.exception.custom.CustomException;
 import kr.hhplus.be.server.repository.CouponRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.util.HashSet;
+import java.util.Set;
+
 @Service
+@RequiredArgsConstructor
 public class CouponService {
 
     private final CouponRepository couponRepository;
-    private final CouponHistService couponHistService;
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    public CouponService(CouponRepository couponRepository, CouponHistService couponHistService) {
-        this.couponRepository = couponRepository;
-        this.couponHistService = couponHistService;
-    }
+    private static final String COUPON_COUNT_KEY = "coupon:count:";
+    private static final String COUPON_BITMAP_KEY = "coupon:bitmap:";
+    private static final String COUPON_TIMESTAMP_KEY = "coupon:timestamp:";
+
 
     @Transactional
     public ResponseUserCoupon getCoupon(RequestUserCoupon requestUserCoupon) {
 
-        // 1. 발급하려는 쿠폰을 hist에서 사용자가 받았는지 조회
-        Boolean couponYn = couponHistService.getCouponHist(requestUserCoupon);
+        Long userId = requestUserCoupon.userId();
+        Long couponId = requestUserCoupon.couponId();
+        Long productId = requestUserCoupon.productId();
 
-        if(couponYn) {
+        if (hasUserIssuedCouponBitmap(userId, couponId)) {
             throw new CustomException("쿠폰을 이미 발급받았음");
         }
 
+        String maxCountKey = "coupon:max:" + couponId;
+        Integer maxCount = (Integer) redisTemplate.opsForValue().get(maxCountKey);
 
-        // 쿠폰발급
-        Coupon coupon = couponRepository.findById(requestUserCoupon.couponId())
-                .orElseThrow(() -> new CustomException("쿠폰을 찾을 수 없음"));
+        if (maxCount == null) {
+            Coupon coupon = searchCoupon(couponId);
 
-        try {
-            // 쿠폰수량 감소
-            coupon.issueCoupon();
+            if (coupon.getRemainQuantity() <= 0) {
+                throw new CustomException("쿠폰 소진");
+            }
 
-            couponRepository.save(coupon);
-        } catch (CustomException e) {
-            throw e;
-        } catch (ObjectOptimisticLockingFailureException e) {
-            throw new CustomException("쿠폰 발급에 실패했습니다. (동시성 충돌 발생)");
-        } catch (Exception e) {
-            throw new CustomException("알 수 없는 오류 발생");
+            maxCount = coupon.getMaxQuantity();
+            redisTemplate.opsForValue().set(maxCountKey, maxCount, Duration.ofDays(1));
         }
 
-        // 쿠폰이력추가
-        CouponHist couponHist = couponHistService.addCouponHist(requestUserCoupon, coupon);
+        String countKey = COUPON_COUNT_KEY + couponId;
+        Long currentCount = redisTemplate.opsForValue().increment(countKey);
 
-        ResponseUserCoupon responseUserCoupon = new ResponseUserCoupon(
-                couponHist.getUserId(),
-                couponHist.getCouponId(),
-                couponHist.getProductId()
-        );
+        if (currentCount == 1) {
+            redisTemplate.expire(countKey, Duration.ofDays(7));
+        }
+
+        if (currentCount > maxCount) {
+            redisTemplate.opsForValue().decrement(countKey);
+            throw new CustomException("쿠폰이 모두 발급되었습니다.");
+        }
+
+        if (!setUserCouponIssuedBitmap(userId, couponId)) {
+            redisTemplate.opsForValue().decrement(countKey);
+            throw new CustomException("쿠폰을 이미 발급받았음");
+        }
+
+        saveIssuedTimestamp(userId, couponId);
+
+        ResponseUserCoupon responseUserCoupon = new ResponseUserCoupon(userId, couponId, productId);
 
         return responseUserCoupon;
     }
 
     public Coupon searchCoupon(Long couponId) {
         return couponRepository.findById(couponId)
-                .orElseThrow(() -> new CustomException("쿠폰없음"));
+                .orElseThrow(() -> new CustomException("쿠폰을 찾을 수 없음"));
     }
 
     public Coupon searchCouponByProductId(Long productId) {
@@ -86,6 +102,50 @@ public class CouponService {
         return expectedDiscountPrice;
     }
 
+
+
+    /**
+     * 비트맵용 추가 여기부터!!
+     */
+
+    /**
+     * 비트맵으로 사용자 쿠폰 발급 여부 확인
+     */
+    private boolean hasUserIssuedCouponBitmap(Long userId, Long couponId) {
+        String bitmapKey = COUPON_BITMAP_KEY + couponId;
+        Boolean isIssued = redisTemplate.opsForValue().getBit(bitmapKey, userId);
+        return Boolean.TRUE.equals(isIssued);
+    }
+
+    /**
+     * 비트맵에 사용자 쿠폰 발급 이력 저장
+     */
+    private boolean setUserCouponIssuedBitmap(Long userId, Long couponId) {
+        String bitmapKey = COUPON_BITMAP_KEY + couponId;
+
+        Boolean alreadyIssued = redisTemplate.opsForValue().getBit(bitmapKey, userId);
+        if (Boolean.TRUE.equals(alreadyIssued)) {
+            return false;
+        }
+
+        redisTemplate.opsForValue().setBit(bitmapKey, userId, true);
+
+        redisTemplate.expire(bitmapKey, Duration.ofDays(7));
+
+        return true;
+    }
+
+    /**
+     * 발급 시간 별도 저장 (배치 처리시 필요)
+     */
+    private void saveIssuedTimestamp(Long userId, Long couponId) {
+        String timestampKey = COUPON_TIMESTAMP_KEY + couponId + ":" + userId;
+        redisTemplate.opsForValue().set(
+                timestampKey,
+                System.currentTimeMillis(),
+                Duration.ofDays(7)
+        );
+    }
 
 
 }

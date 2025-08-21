@@ -13,9 +13,11 @@ import kr.hhplus.be.server.repository.OrderRepository;
 import kr.hhplus.be.server.repository.PointHistRepository;
 import kr.hhplus.be.server.repository.ProductRepository;
 import kr.hhplus.be.server.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class OrderService {
 
     private final OrderRepository orderRepository;
@@ -24,14 +26,6 @@ public class OrderService {
     private final PaymentService paymentService;
     private final CouponService couponService;
 
-    public OrderService(OrderRepository orderRepository, PointHistRepository pointHistRepository, UserRepository userRepository, ProductRepository productRepository, ProductService productService, UserService userService, PaymentService paymentService, CouponService couponService) {
-        this.orderRepository = orderRepository;
-        this.productService = productService;
-        this.userService = userService;
-        this.paymentService = paymentService;
-        this.couponService = couponService;
-    }
-
     /**
      * 상품주문
      * @return ResponseOrder
@@ -39,19 +33,14 @@ public class OrderService {
     @Transactional
     public ResponseOrder orderProduct(RequestOrder requestOrder) {
 
-        // 사용자 조회 및 잔고확인
         User user = userService.getUserAndCheckBalance(requestOrder);
 
-        // 포인트 차감
         user.usePoint(requestOrder.requestPrice());
 
-        // 주문시 재고확인
         Product product = productService.getProductInfo(requestOrder);
 
-        // 상품 재고 차감
         product.decreaseStock(requestOrder.requestQuantity());
 
-        // 쿠폰 조회
         Coupon coupon = couponService.searchCoupon(requestOrder.couponId());
 
         Order order = new Order(
@@ -63,10 +52,8 @@ public class OrderService {
                 requestOrder.requestQuantity(),
                 OrderStatus.IN_PROGRESS
         );
-        // 주문 추가
         Order returnOrder = orderRepository.save(order);
 
-        // 재고 확인 후 결제
         paymentService.paymentProduct(requestOrder, user, product, returnOrder);
 
         ResponseOrder responseOrder = new ResponseOrder(
@@ -92,11 +79,9 @@ public class OrderService {
     @Transactional
     public void cancelOrder(Long orderId) {
 
-        // 1. 주문 조회
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new CustomException("주문을 찾을 수 없습니다"));
 
-        // 2. 주문 상태를 취소로 변경
         order.cancel();
 
     }

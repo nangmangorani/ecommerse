@@ -59,10 +59,8 @@ public class OrderServiceTest {
 
         RequestOrder requestOrder = new RequestOrder(1L, 1L, 1L, 1,1000L, 100,true);
 
-        // given
         given(userRepository.findById(requestOrder.userId())).willReturn(Optional.empty());
 
-        // when, then
         assertThatThrownBy(() -> orderService.orderProduct(requestOrder))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("사용자 미존재");
@@ -76,11 +74,9 @@ public class OrderServiceTest {
 
         User user = new User(1,"이승준", UserStatus.ACTIVE, 1000L);
 
-        // given
         given(userRepository.findById(requestOrder.userId())).willReturn(Optional.of(user));
         given(productRepository.findById(requestOrder.productId())).willReturn(Optional.empty());
 
-        // when, then
         assertThatThrownBy(() -> orderService.orderProduct(requestOrder))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("상품 미존재");
@@ -94,11 +90,9 @@ public class OrderServiceTest {
         User user = new User(1,"이승준", UserStatus.ACTIVE, 1000L);
         Product product = new Product(1,"상품1", ProductStatus.ACTIVE,0,10,1000L,"필기구");
 
-        // given
         given(userRepository.findById(requestOrder.userId())).willReturn(Optional.of(user));
         given(productRepository.findById(requestOrder.productId())).willReturn(Optional.of(product));
 
-        // when, then
         assertThatThrownBy(() -> orderService.orderProduct(requestOrder))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("상품 재고 부족");
@@ -112,11 +106,9 @@ public class OrderServiceTest {
         User user = new User(1,"이승준", UserStatus.ACTIVE, 1000L);
         Product product = new Product(1,"상품1",ProductStatus.ACTIVE,1,10,1000L,"필기구");
 
-        // given
         given(userRepository.findById(requestOrder.userId())).willReturn(Optional.of(user));
         given(productRepository.findById(requestOrder.productId())).willReturn(Optional.of(product));
 
-        // when, then
         assertThatThrownBy(() -> orderService.orderProduct(requestOrder))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("잔고 부족");

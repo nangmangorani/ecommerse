@@ -6,28 +6,31 @@ import kr.hhplus.be.server.dto.product.ResponseProduct;
 import kr.hhplus.be.server.enums.ProductStatus;
 import kr.hhplus.be.server.exception.custom.CustomException;
 import kr.hhplus.be.server.repository.ProductRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class ProductService {
 
     private final ProductRepository productRepository;
     private final RedisTemplate<String, Object> redisTemplate;
-    private final ProductCacheService cacheService;
-
-    public ProductService(ProductRepository productRepository, RedisTemplate<String, Object> redisTemplate, ProductCacheService cacheService) {
-        this.productRepository = productRepository;
-        this.redisTemplate = redisTemplate;
-        this.cacheService = cacheService;
-    }
 
     /**
      * 상품리스트 조회
@@ -56,36 +59,9 @@ public class ProductService {
      * Cache-Aside 패턴 사용
      * @return List<ResponseProductList>
      */
+    @Cacheable(value = "top5-products", key = "'sellQuantity'")
     public List<ResponseProduct> getProductListTop5() {
-
-        long startTime = System.currentTimeMillis();
-
-        try{
-            List<ResponseProduct> cachedProducts = cacheService.getTop5Products();
-
-            if (cachedProducts != null && !cachedProducts.isEmpty()) {
-                cacheService.recordCacheHit();
-                long duration = System.currentTimeMillis() - startTime;
-                log.info("TOP5 상품 조회 완료 (캐시 히트), 응답시간: {}ms", duration);
-                return cachedProducts;
-            }
-
-            cacheService.recordCacheMiss();
-            log.info("TOP5 상품 캐시 미스 - DB 조회 시작");
-
-            List<ResponseProduct> products = getTop5ProductsFromDB();
-
-            cacheService.setTop5Products(products);
-
-            long duration = System.currentTimeMillis() - startTime;
-            log.info("TOP5 상품 조회 완료 (DB), 응답시간: {}ms", duration);
-
-            return products;
-        } catch(Exception e) {
-            long duration = System.currentTimeMillis() - startTime;
-            log.error("TOP5 상품 조회 중 오류 발생, 응답시간: {}ms", duration, e);
-            return getTop5ProductsFromDB();
-        }
+        return getTop5ProductsFromDB();
     }
 
 
@@ -109,7 +85,6 @@ public class ProductService {
         product.decreaseStock(quantity);
     }
 
-    // 재고 증가 (롤백용)
     @Transactional
     public void increaseStock(Long productId, int quantity) {
         Product product = productRepository.findById(productId)
@@ -125,12 +100,66 @@ public class ProductService {
     }
 
     private List<ResponseProduct> getTop5ProductsFromDB() {
-        List<Product> products = Optional.ofNullable(
-                productRepository.findTop5ByOrderBySellQuantityDesc()
-        ).orElseGet(List::of);
+        List<Product> products = productRepository.findTop5ByOrderBySellQuantityDesc();
+
+        if (products == null) {
+            products = List.of();
+        }
 
         return products.stream()
                 .map(ResponseProduct::from)
                 .toList();
     }
+
+    public List<ResponseProduct> getPopularProducts(String period, int limit) {
+
+        String key = getPopularProductKey(period);
+
+        Set<ZSetOperations.TypedTuple<Object>> topProducts =
+                redisTemplate.opsForZSet().reverseRangeWithScores(key, 0, limit -1);
+
+        if (topProducts == null || topProducts.isEmpty()) {
+            log.info("Redis에 {}기간 인기상품 데이터 없음 - 기존 TOP5 로직으로 대체", period);
+            return getTop5ProductsFromDB();
+        }
+        List<Long> productIds = topProducts.stream()
+                .map(tuple -> {
+                    log.debug("상품 ID: {}, 점수: {}", tuple.getValue(), tuple.getScore());
+                    return Long.parseLong(tuple.getValue().toString());
+                })
+                .toList();
+
+        List<Product> products = productRepository.findByIdInAndStatus(productIds, ProductStatus.ACTIVE);
+
+        return productIds.stream()
+                .map(id -> products.stream()
+                        .filter(p -> p.getId().equals(id))
+                        .findFirst()
+                        .map(ResponseProduct::from)
+                        .orElse(null))
+                .filter(product -> product != null)
+                .toList();
+    }
+
+    private String getPopularProductKey(String period) {
+        if ("weekly".equals(period)) {
+            int weekOfYear = LocalDate.now().get(ChronoField.ALIGNED_WEEK_OF_YEAR);
+            int year = LocalDate.now().getYear();
+            return "popular:weekly:" + year + ":" + weekOfYear;
+        } else if ("daily".equals(period)) {
+            String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+            return "popular:daily:" + today;
+        }
+
+        throw new CustomException("지원하지 않는 기간: " + period);
+    }
+
+    /**
+     * TOP5 캐시 무효화
+     */
+    @CacheEvict(value = "top5-products", key = "'sellQuantity'")
+    public void invalidateTop5Cache() {
+        log.info("TOP5 캐시 무효화");
+    }
+
 }

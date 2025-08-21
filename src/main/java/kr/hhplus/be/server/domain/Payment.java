@@ -3,6 +3,7 @@ package kr.hhplus.be.server.domain;
 import jakarta.persistence.*;
 import kr.hhplus.be.server.enums.PaymentStatus;
 import kr.hhplus.be.server.enums.TransactionType;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -10,12 +11,12 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "PAYMENT")
 @Getter
+@AllArgsConstructor
 public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "PAYMENT_ID")
-
     private Long id;
 
     @Column(name = "PAYMENT_STATUS", length = 20, nullable = false)

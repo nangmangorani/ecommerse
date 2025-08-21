@@ -24,4 +24,5 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query(value = "SELECT p FROM Product p WHERE p.id = :productId AND p.status = :status")
     Optional<Product> findByIdAndStatus(@Param("productId") Long productId, ProductStatus status);
 
+    List<Product> findByIdInAndStatus(List<Long> ids, ProductStatus status);
 }

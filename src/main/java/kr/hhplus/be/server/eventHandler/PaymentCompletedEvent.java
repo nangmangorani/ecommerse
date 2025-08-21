@@ -37,12 +37,10 @@ public class PaymentCompletedEvent {
         );
     }
 
-    // 성공한 결제를 위한 편의 메소드
     public static PaymentCompletedEvent success(PointDeductedEvent event, long paymentId) {
         return of(event, paymentId, true);
     }
 
-    // 실패한 결제를 위한 편의 메소드
     public static PaymentCompletedEvent failure(PointDeductedEvent event, long paymentId) {
         return of(event, paymentId, false);
     }

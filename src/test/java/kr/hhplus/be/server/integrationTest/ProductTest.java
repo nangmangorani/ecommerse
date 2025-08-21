@@ -4,7 +4,6 @@ import kr.hhplus.be.server.domain.Product;
 import kr.hhplus.be.server.dto.product.ResponseProduct;
 import kr.hhplus.be.server.enums.ProductStatus;
 import kr.hhplus.be.server.repository.ProductRepository;
-import kr.hhplus.be.server.service.ProductCacheService;
 import kr.hhplus.be.server.service.ProductService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,8 +20,12 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.utility.TestcontainersConfiguration;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,9 +51,6 @@ public class ProductTest {
     private ProductService productService;
 
     @Autowired
-    private ProductCacheService cacheService;
-
-    @Autowired
     private ProductRepository productRepository;
 
     @Autowired
@@ -64,9 +64,10 @@ public class ProductTest {
 
     @BeforeEach
     void setUp() {
+        clearRedisData();
         productRepository.deleteAll();
 
-        cacheService.invalidateTop5Cache();
+        productService.invalidateTop5Cache();
         products = Arrays.asList(
                 new Product("iPhone 15", ProductStatus.ACTIVE, 50, 25, 1200000L, "전자제품"),
                 new Product("삼성 갤럭시 S24", ProductStatus.ACTIVE, 30, 15, 1100000L, "전자제품"),
@@ -220,8 +221,7 @@ public class ProductTest {
     private PerformanceResult measureDBPerformance() throws InterruptedException {
         log.info(" 캐시 없이 DB 직접 조회 성능 측정 중...");
 
-        // 캐시 무효화 -> 모든 요청 DB로
-        cacheService.invalidateTop5Cache();
+        productService.invalidateTop5Cache();
 
         ExecutorService executor = Executors.newFixedThreadPool(10);
         CountDownLatch latch = new CountDownLatch(TEST_REQUESTS);
@@ -230,7 +230,7 @@ public class ProductTest {
         AtomicInteger successCount = new AtomicInteger(0);
 
         for (int i = 0; i < WARM_UP_REQUESTS; i++) {
-            cacheService.invalidateTop5Cache();
+            productService.invalidateTop5Cache();
             productService.getProductListTop5();
         }
 
@@ -239,7 +239,7 @@ public class ProductTest {
         for (int i = 0; i < TEST_REQUESTS; i++) {
             executor.submit(() -> {
                 try {
-                    cacheService.invalidateTop5Cache();
+                    productService.invalidateTop5Cache();
                     long requestStart = System.currentTimeMillis();
                     List<ResponseProduct> result = productService.getProductListTop5();
                     long requestTime = System.currentTimeMillis() - requestStart;
@@ -342,6 +342,158 @@ public class ProductTest {
 
         log.info("");
         log.info("=".repeat(60));
+    }
+
+    @Test
+    @DisplayName("Redis 인기상품 랭킹 - 기본 기능 테스트")
+    void testBasicPopularProductRanking() {
+        log.info("\n=== Redis 인기상품 랭킹 기본 테스트 ===\n");
+
+        Long product1Id = products.get(0).getId();
+        Long product2Id = products.get(1).getId();
+        Long product3Id = products.get(2).getId();
+
+        simulatePurchase(product1Id, 10);
+        simulatePurchase(product2Id, 5);
+        simulatePurchase(product3Id, 3);
+
+        List<ResponseProduct> dailyRanking = productService.getPopularProducts("daily", 5);
+
+        assertThat(dailyRanking).hasSize(3);
+        assertThat(dailyRanking.get(0).productId()).isEqualTo(product1Id);
+        assertThat(dailyRanking.get(1).productId()).isEqualTo(product2Id);
+        assertThat(dailyRanking.get(2).productId()).isEqualTo(product3Id);
+
+        log.info("일간 랭킹 조회 성공:");
+        for (int i = 0; i < dailyRanking.size(); i++) {
+            log.info("{}위: {} (상품 ID: {})", i+1, dailyRanking.get(i).productName(), dailyRanking.get(i).productId());
+        }
+    }
+
+    /**
+     * 구매 시뮬레이션 - OrderEventHandler의 인기도 업데이트 로직 직접 호출
+     */
+    private void simulatePurchase(Long productId, int quantity) {
+        String dailyKey = getDailyPopularKey();
+        String weeklyKey = getWeeklyPopularKey();
+
+        redisTemplate.opsForZSet().incrementScore(dailyKey, productId.toString(), quantity);
+        redisTemplate.opsForZSet().incrementScore(weeklyKey, productId.toString(), quantity);
+
+        redisTemplate.expire(dailyKey, java.time.Duration.ofDays(1));
+        redisTemplate.expire(weeklyKey, java.time.Duration.ofDays(7));
+    }
+
+    @Test
+    @DisplayName("Redis 인기상품 랭킹 - 주간 vs 일간 비교")
+    void testWeeklyVsDailyRanking() {
+        log.info("\n=== 주간 vs 일간 랭킹 비교 테스트 ===\n");
+
+        Long product1Id = products.get(0).getId();
+        Long product2Id = products.get(1).getId();
+        Long product3Id = products.get(2).getId();
+
+        simulatePurchase(product1Id, 8);
+        simulatePurchase(product2Id, 12);
+        simulatePurchase(product3Id, 5);
+
+        List<ResponseProduct> dailyRanking = productService.getPopularProducts("daily", 5);
+        List<ResponseProduct> weeklyRanking = productService.getPopularProducts("weekly", 5);
+
+        assertThat(dailyRanking).hasSize(3);
+        assertThat(weeklyRanking).hasSize(3);
+
+        log.info("=========== 결과값 및 순위 정렬 ==============");
+        String dailyKey = getDailyPopularKey();
+        for(ResponseProduct responseProduct : dailyRanking) {
+            Double redisScore = redisTemplate.opsForZSet().score(dailyKey, responseProduct.productId().toString());
+            log.info("상품 ID: {}, 상품명: {}, DB 판매량: {}, Redis 점수: {}",
+                    responseProduct.productId(),
+                    responseProduct.productName(),
+                    responseProduct.sellQuantity(),
+                    redisScore != null ? redisScore.intValue() : 0);
+        }
+
+        assertThat(dailyRanking.get(0).productId()).isEqualTo(weeklyRanking.get(0).productId());
+        assertThat(dailyRanking.get(0).productId()).isEqualTo(product2Id);
+
+        log.info("일간 1위: {}", dailyRanking.get(0).productName());
+        log.info("주간 1위: {}", weeklyRanking.get(0).productName());
+    }
+
+    @Test
+    @DisplayName("Redis 인기상품 랭킹 - 동시 구매 테스트")
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void testConcurrentPurchases() throws InterruptedException {
+        log.info("\n=== 동시 구매 인기상품 랭킹 테스트 ===\n");
+
+        Long productId = products.get(0).getId();
+        int totalPurchases = 100;
+        int threadCount = 10;
+
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch latch = new CountDownLatch(totalPurchases);
+        AtomicInteger successCount = new AtomicInteger(0);
+
+        for (int i = 0; i < totalPurchases; i++) {
+            executor.submit(() -> {
+                try {
+                    simulatePurchase(productId, 1);
+                    successCount.incrementAndGet();
+                } catch (Exception e) {
+                    log.error("구매 시뮬레이션 실패", e);
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+        executor.shutdown();
+
+        String dailyKey = getDailyPopularKey();
+        Double score = redisTemplate.opsForZSet().score(dailyKey, productId.toString());
+
+        assertThat(score).isNotNull();
+        assertThat(score.intValue()).isEqualTo(successCount.get());
+
+        log.info("동시 구매 테스트 결과:");
+        log.info("- 성공한 구매: {}회", successCount.get());
+        log.info("- Redis 저장된 점수: {}", score);
+        log.info("- 점수 일치 여부: {}", score.intValue() == successCount.get());
+    }
+
+    private String getDailyPopularKey() {
+        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        return "popular:daily:" + today;
+    }
+
+    private String getWeeklyPopularKey() {
+        int weekOfYear = LocalDate.now().get(ChronoField.ALIGNED_WEEK_OF_YEAR);
+        return "popular:weekly:" + LocalDate.now().getYear() + ":" + weekOfYear;
+    }
+
+    private void clearRedisData() {
+        String dailyPattern = "popular:daily:*";
+        String weeklyPattern = "popular:weekly:*";
+
+        Set<String> dailyKeys = redisTemplate.keys(dailyPattern);
+        Set<String> weeklyKeys = redisTemplate.keys(weeklyPattern);
+
+        if (dailyKeys != null && !dailyKeys.isEmpty()) {
+            redisTemplate.delete(dailyKeys);
+            log.info("Redis 일간 키 삭제: {}", dailyKeys);
+        }
+        if (weeklyKeys != null && !weeklyKeys.isEmpty()) {
+            redisTemplate.delete(weeklyKeys);
+            log.info("Redis 주간 키 삭제: {}", weeklyKeys);
+        }
+
+        String todayDaily = getDailyPopularKey();
+        String thisWeekly = getWeeklyPopularKey();
+        redisTemplate.delete(todayDaily);
+        redisTemplate.delete(thisWeekly);
+        log.info("현재 테스트 키 삭제: {}, {}", todayDaily, thisWeekly);
     }
 
     private static class PerformanceResult {

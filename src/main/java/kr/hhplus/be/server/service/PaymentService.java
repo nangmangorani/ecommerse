@@ -7,17 +7,14 @@ import kr.hhplus.be.server.dto.order.RequestOrder;
 import kr.hhplus.be.server.dto.point.RequestPointCharge;
 import kr.hhplus.be.server.repository.PaymentRepository;
 import kr.hhplus.be.server.domain.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class PaymentService {
     private final PointHistService pointHistService;
     private final PaymentRepository paymentRepository;
-
-    public PaymentService(PointHistService pointHistService, PaymentRepository paymentRepository) {
-        this.pointHistService = pointHistService;
-        this.paymentRepository = paymentRepository;
-    }
 
     /**
      * 상품결제
@@ -29,7 +26,6 @@ public class PaymentService {
 
     public void paymentProduct(RequestOrder requestOrder, User user, Product product, Order order) {
 
-        // 결제이력 추가
         Payment payment = new Payment(
             PaymentStatus.COMPLETED,
                 requestOrder.requestPrice(),
@@ -60,10 +56,8 @@ public class PaymentService {
 
     public User chargePoint(User user, RequestPointCharge requestPointCharge) {
 
-        // 포인트 충전
         user.addPoint(requestPointCharge.userPoint());
 
-        // 결제이력 추가
         Payment payment = new Payment(
                 PaymentStatus.COMPLETED,
                 requestPointCharge.userPoint(),
@@ -72,7 +66,6 @@ public class PaymentService {
 
         Payment returnPayment = paymentRepository.save(payment);
 
-        // 포인트 이력 저장
         pointHistService.createPointHist(user,
                 TransactionType.CHARGE,
                 returnPayment.getPrice(),
