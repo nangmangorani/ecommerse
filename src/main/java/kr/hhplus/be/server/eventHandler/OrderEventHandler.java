@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoField;
 import java.util.concurrent.ExecutorService;
@@ -80,7 +81,6 @@ public class OrderEventHandler {
 
                 updatePopularityScore(event.getProductId(), event.getRequestQuantity());
 
-
                 orderEventPublisher.publishPaymentCompleted(
                         PaymentCompletedEvent.of(event, result.getId(),true)
                 );
@@ -91,6 +91,23 @@ public class OrderEventHandler {
         } catch (Exception e) {
             throw new CustomException("결제실패");
         }
+    }
+
+    @EventListener
+    @Async("orderTaskExecutor")
+    public void sendOrderInfo(PaymentCompletedEvent event) {
+
+        try {
+            log.info("주문정보 전송 시작 - 주문ID: {}", event.getOrderId());
+
+            OrderTransferData orderData = createOrderTransferData(event);
+
+            sendOrderData(orderData);
+            log.info("주문정보 전송 완료 - 주문ID: {}", event.getOrderId());
+        } catch (Exception e) {
+            log.error("주문정보 전송 실패 - 주문ID: {}", event.getOrderId(), e);
+        }
+
     }
 
     private void updatePopularityScore(Long productId, int quantity) {
@@ -148,6 +165,44 @@ public class OrderEventHandler {
     private String getWeeklyPopularKey() {
         int weekOfYear = LocalDate.now().get(ChronoField.ALIGNED_WEEK_OF_YEAR);
         return "popular:weekly:" + LocalDate.now().getYear() + ":" + weekOfYear;
+    }
+
+    private void sendOrderData(OrderTransferData orderTransferData) {
+
+        try {
+            String jsonData = convertToJson(orderTransferData);
+
+            log.info("데이터 전송 완료 - 데이터: {}", jsonData);
+
+        } catch (CustomException e) {
+            Thread.currentThread().interrupt();
+            throw new CustomException("전송 중 인터럽트 발생");
+        }
+
+        log.info("사용자 {}에게 주문 {} 정보를 전송", orderTransferData.getUserName(), orderTransferData.getProductName());
+    }
+
+    private OrderTransferData createOrderTransferData(PaymentCompletedEvent event) {
+        return OrderTransferData.builder()
+                .userName(event.getUserName())
+                .productName(event.getProductName())
+                .quantity(event.getRequestQuantity())
+                .originalPrice(event.getOriginalPrice())
+                .discountPrice(event.getRequestPrice())
+                .createdAt(event.getCreatedAt())
+                .build();
+    }
+
+    private String convertToJson(OrderTransferData orderData) {
+        return String.format(
+                "{\"userName\":\"%s\",\"productName\":\"%s\",\"quantity\":%d,\"originalPrice\":%d,\"discountPrice\":%d,\"createdAt\":\"%s\"}",
+                orderData.getUserName(),
+                orderData.getProductName(),
+                orderData.getQuantity(),
+                orderData.getOriginalPrice(),
+                orderData.getDiscountPrice(),
+                orderData.getCreatedAt()
+        );
     }
 
 }

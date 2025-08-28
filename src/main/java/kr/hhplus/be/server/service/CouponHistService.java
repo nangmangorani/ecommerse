@@ -23,6 +23,7 @@ public class CouponHistService {
     private final RedisTemplate<String, Object> redisTemplate;
 
     private static final String COUPON_TIMESTAMP_KEY = "coupon:timestamp:";
+    private static final int COUPON_KEY_SEGMENT_COUNT = 4;
 
     /**
      * 특정 쿠폰의 비트맵에서 발급받은 사용자들을 DB에 저장
@@ -44,7 +45,7 @@ public class CouponHistService {
 
         for (Long userId : issuedUserIds) {
             try {
-                if (couponHistRepository.findByCouponIdAndUserId(couponId, userId).isPresent()) {
+                if (couponHistRepository.existsByCouponIdAndUserId(couponId, userId)) {
                     log.debug("이미 DB에 존재하는 쿠폰 이력: userId={}, couponId={}", userId, couponId);
                     continue;
                 }
@@ -152,7 +153,7 @@ public class CouponHistService {
         for (String timestampKey : timestampKeys) {
             try {
                 String[] parts = timestampKey.split(":");
-                if (parts.length >= 4) {
+                if (parts.length >= COUPON_KEY_SEGMENT_COUNT) {
                     Long userId = Long.parseLong(parts[3]);
                     issuedUserIds.add(userId);
                 }
@@ -171,7 +172,7 @@ public class CouponHistService {
     private CouponTimestampKeyInfo parseTimestampKey(String timestampKey) {
         String[] parts = timestampKey.split(":");
 
-        if (parts.length < 4) {
+        if (parts.length < COUPON_KEY_SEGMENT_COUNT) {
             throw new IllegalArgumentException("잘못된 타임스탬프 키 형식: " + timestampKey);
         }
 

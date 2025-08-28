@@ -10,6 +10,7 @@ import kr.hhplus.be.server.exception.custom.CustomException;
 import kr.hhplus.be.server.repository.CouponRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +24,9 @@ import java.util.Set;
 public class CouponService {
 
     private final CouponRepository couponRepository;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Long> longRedisTemplate;
+    private final RedisTemplate<String, Integer> integerRedisTemplate;
+    private final StringRedisTemplate stringRedisTemplate;
 
     private static final String COUPON_COUNT_KEY = "coupon:count:";
     private static final String COUPON_BITMAP_KEY = "coupon:bitmap:";
@@ -42,7 +45,7 @@ public class CouponService {
         }
 
         String maxCountKey = "coupon:max:" + couponId;
-        Integer maxCount = (Integer) redisTemplate.opsForValue().get(maxCountKey);
+        Integer maxCount = integerRedisTemplate.opsForValue().get(maxCountKey);
 
         if (maxCount == null) {
             Coupon coupon = searchCoupon(couponId);
@@ -52,23 +55,23 @@ public class CouponService {
             }
 
             maxCount = coupon.getMaxQuantity();
-            redisTemplate.opsForValue().set(maxCountKey, maxCount, Duration.ofDays(1));
+            integerRedisTemplate.opsForValue().set(maxCountKey, maxCount, Duration.ofDays(1));
         }
 
         String countKey = COUPON_COUNT_KEY + couponId;
-        Long currentCount = redisTemplate.opsForValue().increment(countKey);
+        Long currentCount = longRedisTemplate.opsForValue().increment(countKey);
 
         if (currentCount == 1) {
-            redisTemplate.expire(countKey, Duration.ofDays(7));
+            longRedisTemplate.expire(countKey, Duration.ofDays(7));
         }
 
         if (currentCount > maxCount) {
-            redisTemplate.opsForValue().decrement(countKey);
+            longRedisTemplate.opsForValue().decrement(countKey);
             throw new CustomException("쿠폰이 모두 발급되었습니다.");
         }
 
         if (!setUserCouponIssuedBitmap(userId, couponId)) {
-            redisTemplate.opsForValue().decrement(countKey);
+            longRedisTemplate.opsForValue().decrement(countKey);
             throw new CustomException("쿠폰을 이미 발급받았음");
         }
 
@@ -113,7 +116,7 @@ public class CouponService {
      */
     private boolean hasUserIssuedCouponBitmap(Long userId, Long couponId) {
         String bitmapKey = COUPON_BITMAP_KEY + couponId;
-        Boolean isIssued = redisTemplate.opsForValue().getBit(bitmapKey, userId);
+        Boolean isIssued = stringRedisTemplate.opsForValue().getBit(bitmapKey, userId);
         return Boolean.TRUE.equals(isIssued);
     }
 
@@ -123,14 +126,14 @@ public class CouponService {
     private boolean setUserCouponIssuedBitmap(Long userId, Long couponId) {
         String bitmapKey = COUPON_BITMAP_KEY + couponId;
 
-        Boolean alreadyIssued = redisTemplate.opsForValue().getBit(bitmapKey, userId);
+        Boolean alreadyIssued = stringRedisTemplate.opsForValue().getBit(bitmapKey, userId);
         if (Boolean.TRUE.equals(alreadyIssued)) {
             return false;
         }
 
-        redisTemplate.opsForValue().setBit(bitmapKey, userId, true);
+        stringRedisTemplate.opsForValue().setBit(bitmapKey, userId, true);
 
-        redisTemplate.expire(bitmapKey, Duration.ofDays(7));
+        stringRedisTemplate.expire(bitmapKey, Duration.ofDays(7));
 
         return true;
     }
@@ -140,7 +143,7 @@ public class CouponService {
      */
     private void saveIssuedTimestamp(Long userId, Long couponId) {
         String timestampKey = COUPON_TIMESTAMP_KEY + couponId + ":" + userId;
-        redisTemplate.opsForValue().set(
+        longRedisTemplate.opsForValue().set(
                 timestampKey,
                 System.currentTimeMillis(),
                 Duration.ofDays(7)

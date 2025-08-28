@@ -5,6 +5,7 @@ import kr.hhplus.be.server.service.CouponService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +23,8 @@ public class CouponHistBatch {
 
     private final CouponHistService couponHistService;
     private final CouponService couponService;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final RedisTemplate<String, Long> longRedisTemplate;
 
     private static final String COUPON_BITMAP_KEY = "coupon:bitmap:";
     private static final String COUPON_TIMESTAMP_KEY = "coupon:timestamp:";
@@ -42,13 +44,12 @@ public class CouponHistBatch {
     private void processCouponsByDate(LocalDate targetDate) {
         String datePattern = targetDate.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
-        Set<String> timestampKeys = redisTemplate.keys(COUPON_TIMESTAMP_KEY + "*");
-
+        Set<String> timestampKeys = longRedisTemplate.keys(COUPON_TIMESTAMP_KEY + "*");
         Set<String> targetDateKeys = new HashSet<>();
 
-        if (timestampKeys != null) {
+        if (!timestampKeys.isEmpty()) {
             for (String key : timestampKeys) {
-                Long timestamp = (Long) redisTemplate.opsForValue().get(key);
+                Long timestamp = longRedisTemplate.opsForValue().get(key);
                 if (timestamp != null) {
                     LocalDate issueDate = LocalDate.ofInstant(
                             Instant.ofEpochMilli(timestamp),
@@ -65,7 +66,7 @@ public class CouponHistBatch {
         if (!targetDateKeys.isEmpty()) {
             couponHistService.saveCouponHistoriesFromTimestamps(targetDateKeys);
 
-            redisTemplate.delete(targetDateKeys);
+            longRedisTemplate.delete(targetDateKeys);
 
             log.info("날짜별 쿠폰 DB 저장 완료: {} ({} 건)", targetDate, targetDateKeys.size());
         } else {
@@ -90,16 +91,16 @@ public class CouponHistBatch {
     private void cleanupRedisData(Long couponId) {
         try {
             String bitmapKey = COUPON_BITMAP_KEY + couponId;
-            redisTemplate.delete(bitmapKey);
+            stringRedisTemplate.delete(bitmapKey);
 
             String timestampPattern = COUPON_TIMESTAMP_KEY + couponId + ":*";
-            Set<String> timestampKeys = redisTemplate.keys(timestampPattern);
-            if (timestampKeys != null && !timestampKeys.isEmpty()) {
-                redisTemplate.delete(timestampKeys);
+            Set<String> timestampKeys = longRedisTemplate.keys(timestampPattern);
+            if (!timestampKeys.isEmpty()) {
+                longRedisTemplate.delete(timestampKeys);
             }
 
             String countKey = "coupon:count:" + couponId;
-            redisTemplate.delete(countKey);
+            longRedisTemplate.delete(countKey);
 
             log.info("Redis 데이터 정리 완료: {}", couponId);
         } catch (Exception e) {
