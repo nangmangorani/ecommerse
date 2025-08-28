@@ -9,4 +9,7 @@ import java.util.Optional;
 @Repository
 public interface CouponHistRepository extends JpaRepository<CouponHist, Long> {
     Optional<CouponHist> findByCouponIdAndUserId(long couponId, long userId);
+
+    boolean existsByCouponIdAndUserId(Long couponId, Long userId);
+
 }

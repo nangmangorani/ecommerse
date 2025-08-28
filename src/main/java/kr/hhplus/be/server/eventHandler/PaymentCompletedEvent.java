@@ -1,39 +1,39 @@
 package kr.hhplus.be.server.eventHandler;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
+
 @Getter
+@AllArgsConstructor
 public class PaymentCompletedEvent {
 
+    private final long paymentId;
+    private final boolean paymentSuccess;
     private final Long orderId;
     private final Long userId;
     private final Long productId;
     private final int requestQuantity;
-    private final long requestPrice;
-    private final long paymentId;
-    private final boolean paymentSuccess;
-
-    private PaymentCompletedEvent(Long orderId, Long userId, Long productId,
-                                  int requestQuantity, long requestPrice,
-                                  long paymentId, boolean paymentSuccess) {
-        this.orderId = orderId;
-        this.userId = userId;
-        this.productId = productId;
-        this.requestQuantity = requestQuantity;
-        this.requestPrice = requestPrice;
-        this.paymentId = paymentId;
-        this.paymentSuccess = paymentSuccess;
-    }
+    private final Long originalPrice;
+    private final Long requestPrice;
+    private final LocalDateTime createdAt;
+    private final String productName;
+    private final String userName;
 
     public static PaymentCompletedEvent of(PointDeductedEvent event, long paymentId, boolean success) {
         return new PaymentCompletedEvent(
+                paymentId,
+                success,
                 event.getOrderId(),
                 event.getUserId(),
                 event.getProductId(),
                 event.getRequestQuantity(),
+                event.getOriginalPrice(),
                 event.getRequestPrice(),
-                paymentId,
-                success
+                event.getCreatedAt(),
+                event.getProductName(),
+                event.getUserName()
         );
     }
 
