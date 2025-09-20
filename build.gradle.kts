@@ -57,6 +57,10 @@ dependencies {
 	// redis
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
 	implementation("org.redisson:redisson-spring-boot-starter:3.23.4")
+
+	// Monitoring & Metrics (k6 부하테스트용)
+	implementation("io.micrometer:micrometer-registry-prometheus")
+
 }
 
 tasks.withType<Test> {
